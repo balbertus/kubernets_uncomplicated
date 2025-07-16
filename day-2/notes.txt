@@ -223,3 +223,166 @@ Events:
   Normal  Started    36s   kubelet            Started container busybox
 user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$
 
+#######################################pod limits####################################################################################################
+Limits on Container inside the pods
+# manifest
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: balbertus
+  name: balbertus
+spec:
+  containers:
+  - image: ubuntu
+    name: ubuntu
+    args:
+    - sleep
+    - "1200"
+    resources:
+      limits:
+        cpu: "0.5"
+        memory: "128Mi"
+      requests:
+        cpu: "0.3"
+        memory: "64Mi"
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+>> pod describe output
+
+   Args:
+      sleep
+      1200
+    State:          Running
+      Started:      Wed, 16 Jul 2025 09:36:02 -0300
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  128Mi
+    Requests:
+      cpu:        300m
+      memory:     64Mi
+    Environment:  <none>
+
+    >> connect into pod/container (exec bash) and instal stress test to validate limits
+
+    #kubectl exec -ti balbertus -- bash
+    #apt-get update && apt-get install stress
+
+root@balbertus:/# stress --vm 1 --vm-bytes 128M --timeout 10s
+stress: info: [175] dispatching hogs: 0 cpu, 0 io, 1 vm, 0 hdd
+command terminated with exit code 137
+
+root@balbertus:/# stress --vm 1 --vm-bytes 60M --timeout 10s
+stress: info: [181] dispatching hogs: 0 cpu, 0 io, 1 vm, 0 hdd
+stress: info: [181] successful run completed in 10s
+root@balbertus:/# 
+
+DUE CPU LIMITATION
+
+root@balbertus:/# stress --vm 1 --cpu 1 --timeout 10s
+stress: info: [183] dispatching hogs: 1 cpu, 0 io, 1 vm, 0 hdd
+command terminated with exit code 137
+user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ 
+
+##################pod persistence############################################
+empty dir concept > do not garantee in case of removal - just for restarting situations
+
+#manifest
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: balbertus
+  name: balbertus
+spec:
+  containers:
+  - image: nginx
+    name: webserver
+    volumeMounts:
+    - mountPath: /balbertus
+      name: first-emptydir 
+    resources:
+      limits:
+        cpu: "0.5"
+        memory: "128Mi"
+      requests:
+        cpu: "0.3"
+        memory: "64Mi"
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes:
+  - name: first-emptydir
+    emptyDir:
+      sizeLimit: "256Mi"
+status: {}
+
+# describe output
+  IP:  10.244.2.4
+Containers:
+  webserver:
+    Container ID:   containerd://8f725b61e7e95e9e11707637f39ec155a90c8ca5ffa920215e77bd306f738f84
+    Image:          nginx
+    Image ID:       docker.io/library/nginx@sha256:f5c017fb33c6db484545793ffb67db51cdd7daebee472104612f73a85063f889
+    Port:           <none>
+    Host Port:      <none>
+    State:          Running
+      Started:      Wed, 16 Jul 2025 10:13:49 -0300
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  128Mi
+    Requests:
+      cpu:        300m
+      memory:     64Mi
+    Environment:  <none>
+    Mounts:
+      /balbertus from first-emptydir (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-szsvd (ro)
+
+
+user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ kubectl exec -ti balbertus -- bash
+root@balbertus:/# ls
+balbertus  bin	boot  dev  docker-entrypoint.d	docker-entrypoint.sh  etc  home  lib  lib64  media  mnt  opt  proc  product_name  product_uuid	root  run  sbin  srv  sys  tmp	usr  var
+root@balbertus:/# ls -la
+total 76
+drwxr-xr-x   1 root   root    4096 Jul 16 13:13 .
+drwxr-xr-x   1 root   root    4096 Jul 16 13:13 ..
+drwxrwxrwx   2 root   root    4096 Jul 16 13:13 balbertus
+lrwxrwxrwx   1 root   root       7 Jun 30 00:00 bin -> usr/bin
+drwxr-xr-x   2 root   root    4096 May  9 14:50 boot
+drwxr-xr-x   5 root   root     360 Jul 16 13:13 dev
+drwxr-xr-x   1 root   root    4096 Jul 15 01:14 docker-entrypoint.d
+-rwxr-xr-x   1 root   root    1620 Jul 15 01:14 docker-entrypoint.sh
+drwxr-xr-x   1 root   root    4096 Jul 16 13:13 etc
+drwxr-xr-x   2 root   root    4096 May  9 14:50 home
+lrwxrwxrwx   1 root   root       7 Jun 30 00:00 lib -> usr/lib
+lrwxrwxrwx   1 root   root       9 Jun 30 00:00 lib64 -> usr/lib64
+drwxr-xr-x   2 root   root    4096 Jun 30 00:00 media
+drwxr-xr-x   2 root   root    4096 Jun 30 00:00 mnt
+drwxr-xr-x   2 root   root    4096 Jun 30 00:00 opt
+dr-xr-xr-x 429 nobody nogroup    0 Jul 16 13:13 proc
+-rw-r--r--   1 root   root       5 Jul 16 13:13 product_name
+-rw-r--r--   1 root   root      37 Jul 16 13:13 product_uuid
+drwx------   2 root   root    4096 Jun 30 00:00 root
+drwxr-xr-x   1 root   root    4096 Jul 16 13:13 run
+lrwxrwxrwx   1 root   root       8 Jun 30 00:00 sbin -> usr/sbin
+drwxr-xr-x   2 root   root    4096 Jun 30 00:00 srv
+dr-xr-xr-x  13 nobody nogroup    0 Jul 16 13:13 sys
+drwxrwxrwt   2 root   root    4096 Jun 30 00:00 tmp
+drwxr-xr-x   1 root   root    4096 Jun 30 00:00 usr
+drwxr-xr-x   1 root   root    4096 Jun 30 00:00 var
+root@balbertus:/# ls
+balbertus  bin	boot  dev  docker-entrypoint.d	docker-entrypoint.sh  etc  home  lib  lib64  media  mnt  opt  proc  product_name  product_uuid	root  run  sbin  srv  sys  tmp	usr  var
+root@balbertus:/# cd balbertus/
+root@balbertus:/balbertus# pwd
+/balbertus
+root@balbertus:/balbertus# mount |grep balbertus
+/dev/mapper/vgapp-home1 on /balbertus type ext4 (rw,relatime,errors=remount-ro)
+root@balbertus:/balbertus# 
