@@ -1,0 +1,34 @@
+apiVersion: apps/v1 # API version of K8s object
+kind: DaemonSet # Object Type
+metadata: # Informations about this object
+  name: node-exporter # Object name
+spec: # Object specification 
+  selector: # Object selector
+    matchLabels: # Labels to be used to select Pods
+      app: node-exporter # Label to used to select Pods
+  template: # Object Template
+    metadata: # Informations about this object
+      labels: # Labels to be added into Pods
+        app: node-exporter # Label that will be added into Pods
+    spec: # Object specification, in this case Pod specification
+      hostNetwork: true # Enable Network of th host to be used... Be careful
+      containers: # List of containers that will be performed into pod
+      - name: node-exporter # Name of contêiner
+        image: prom/node-exporter:latest # Image of contêiner
+        ports: # List of ports that will be exposed by container 
+        - containerPort: 9100 # COntainer Port number 
+          hostPort: 9100 # Host port number 
+        volumeMounts: # List of volumes that will be mounted fo container, so the node-exporter needs access to /proc and /sys
+        - name: proc # Name of volume
+          mountPath: /host/proc # Path where the volume will be mounted inside contêiner
+          readOnly: true # Enable only ready mode (ro)
+        - name: sys # Name of volume 
+          mountPath: /host/sys # Path where the volmewill be mounted inside container
+          readOnly: true # enable readonly mode (ro)
+      volumes: # List of volumes that will be used by Pod
+      - name: proc # Name of volume
+        hostPath: # Type of volume 
+          path: /proc # Path of volume by host
+      - name: sys # Name of volume
+        hostPath: # Type of volume
+          path: /sys # Path of volume into host
