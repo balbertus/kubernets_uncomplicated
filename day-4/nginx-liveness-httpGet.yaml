@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nginx-liveness-http
+  name: nginx-liveness-http
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-liveness-http
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx-liveness-http
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        resources:
+          limits:
+            cpu: 1
+            memory: "256Mi"
+          requests:  
+            cpu: 0.5
+            memory: "128Mi"
+        livenessProbe: 
+          httpGet: # 'lveness Probe by httpGet'
+            path: /balbertus #'It is the endpoint to be used'
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
