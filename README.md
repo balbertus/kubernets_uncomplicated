@@ -514,9 +514,8 @@ root@balbertus:/balbertus#
 
 ################################################################################################################
 
-DAY - 3
+DAY - 3 - DEPLOYMENTS
 
-#################DEPLOYMENTS############################################3
 Manifest
 apiVersion: apps/v1
 kind: Deployment
@@ -902,3 +901,268 @@ No resources found in default namespace.
 $ kubectl get deployments -n balbertus
 NAME              READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-balbertus   6/6     6            6           23s
+
+#################################################################################
+DAY - 4 - REPLICASET / DAEMONSET and PROBES
+
+$ kubectl get deployment
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   1/1     1            1           10s
+$ kubectl get replicaset
+NAME                          DESIRED   CURRENT   READY   AGE
+nginx-deployment-847d96855b   1         1         1       3m45s
+$ cat deployment.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment
+  name: nginx-deployment
+spec:
+  replicas: 1 
+  selector:
+    matchLabels: 
+      app: nginx-deployment
+  strategy: {}
+  template:
+    metadata:
+      labels: 
+        app: nginx-deployment
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "128Mi"
+          requests:
+            cpu: "0.3"
+            memory: "64Mi"
+
+#######################SCALE REPLICASET###############################################
+$ kubectl scale deployment nginx-deployment --replicas=3
+deployment.apps/nginx-deployment scaled
+$ kubectl get replicaset
+NAME                          DESIRED   CURRENT   READY   AGE
+nginx-deployment-847d96855b   3         3         3       7m41s
+$ kubectl get deployment
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   3/3     3            3           7m49s
+
+#######################DESCRIBE####################################################
+$ kubectl describe replicaset nginx-deployment-575cffbfc6
+Name:           nginx-deployment-575cffbfc6
+Namespace:      default
+Selector:       app=nginx-deployment,pod-template-hash=575cffbfc6
+Labels:         app=nginx-deployment
+                pod-template-hash=575cffbfc6
+Annotations:    deployment.kubernetes.io/desired-replicas: 3
+                deployment.kubernetes.io/max-replicas: 4
+                deployment.kubernetes.io/revision: 1
+Controlled By:  Deployment/nginx-deployment
+Replicas:       3 current / 3 desired
+Pods Status:    3 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  app=nginx-deployment
+           pod-template-hash=575cffbfc6
+  Containers:
+   nginx:
+    Image:      nginx:1.18.0
+    Port:       <none>
+    Host Port:  <none>
+    Limits:
+      cpu:     500m
+      memory:  128Mi
+    Requests:
+      cpu:         300m
+      memory:      64Mi
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Events:
+  Type    Reason            Age   From                   Message
+  ----    ------            ----  ----                   -------
+  Normal  SuccessfulCreate  63s   replicaset-controller  Created pod: nginx-deployment-575cffbfc6-42wwf
+  Normal  SuccessfulCreate  63s   replicaset-controller  Created pod: nginx-deployment-575cffbfc6-2pts5
+  Normal  SuccessfulCreate  63s   replicaset-controller  Created pod: nginx-deployment-575cffbfc6-n7d95
+
+################################NEW APP VERSION##########################################################
+$ kubectl get replicaset
+NAME                          DESIRED   CURRENT   READY   AGE
+nginx-deployment-575cffbfc6   3         3         3       2m32s
+user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ vim deployment.yaml 
+user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl apply -f deployment.yaml 
+deployment.apps/nginx-deployment configured
+user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl get replicaset
+NAME                          DESIRED   CURRENT   READY   AGE
+nginx-deployment-575cffbfc6   3         3         3       2m55s
+nginx-deployment-579d7cd555   1         1         0       3s
+
+>>>SEE the TWO replicasets.... differ by nginx app version<<<
+$ kubectl describe replicaset nginx-deployment 
+Name:           nginx-deployment-575cffbfc6
+Namespace:      default
+Selector:       app=nginx-deployment,pod-template-hash=575cffbfc6
+Labels:         app=nginx-deployment
+                pod-template-hash=575cffbfc6
+Annotations:    deployment.kubernetes.io/desired-replicas: 3
+                deployment.kubernetes.io/max-replicas: 4
+                deployment.kubernetes.io/revision: 1
+Controlled By:  Deployment/nginx-deployment
+Replicas:       0 current / 0 desired
+Pods Status:    0 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  app=nginx-deployment
+           pod-template-hash=575cffbfc6
+  Containers:
+   nginx:
+    Image:      nginx:1.18.0
+    Port:       <none>
+    Host Port:  <none>
+    Limits:
+      cpu:     500m
+      memory:  128Mi
+    Requests:
+      cpu:         300m
+      memory:      64Mi
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Events:
+  Type    Reason            Age    From                   Message
+  ----    ------            ----   ----                   -------
+  Normal  SuccessfulCreate  5m15s  replicaset-controller  Created pod: nginx-deployment-575cffbfc6-42wwf
+  Normal  SuccessfulCreate  5m15s  replicaset-controller  Created pod: nginx-deployment-575cffbfc6-2pts5
+  Normal  SuccessfulCreate  5m15s  replicaset-controller  Created pod: nginx-deployment-575cffbfc6-n7d95
+  Normal  SuccessfulDelete  2m10s  replicaset-controller  Deleted pod: nginx-deployment-575cffbfc6-42wwf
+  Normal  SuccessfulDelete  117s   replicaset-controller  Deleted pod: nginx-deployment-575cffbfc6-2pts5
+  Normal  SuccessfulDelete  115s   replicaset-controller  Deleted pod: nginx-deployment-575cffbfc6-n7d95
+
+Name:           nginx-deployment-579d7cd555
+Namespace:      default
+Selector:       app=nginx-deployment,pod-template-hash=579d7cd555
+Labels:         app=nginx-deployment
+                pod-template-hash=579d7cd555
+Annotations:    deployment.kubernetes.io/desired-replicas: 3
+                deployment.kubernetes.io/max-replicas: 4
+                deployment.kubernetes.io/revision: 2
+Controlled By:  Deployment/nginx-deployment
+Replicas:       3 current / 3 desired
+Pods Status:    3 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  app=nginx-deployment
+           pod-template-hash=579d7cd555
+  Containers:
+   nginx:
+    Image:      nginx:1.19.0
+    Port:       <none>
+    Host Port:  <none>
+    Limits:
+      cpu:     500m
+      memory:  128Mi
+    Requests:
+      cpu:         300m
+      memory:      64Mi
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Events:
+  Type    Reason            Age    From                   Message
+  ----    ------            ----   ----                   -------
+  Normal  SuccessfulCreate  2m23s  replicaset-controller  Created pod: nginx-deployment-579d7cd555-dgtf7
+  Normal  SuccessfulCreate  2m10s  replicaset-controller  Created pod: nginx-deployment-579d7cd555-tw8vz
+  Normal  SuccessfulCreate  117s   replicaset-controller  Created pod: nginx-deployment-579d7cd555-f7xsk
+
+$ kubectl get replicaset
+NAME                          DESIRED   CURRENT   READY   AGE
+nginx-deployment-575cffbfc6   0         0         0       8m39s
+nginx-deployment-579d7cd555   3         3         3       5m47s
+
+################################DOING A ROLLBACK###########################################################################
+
+user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl rollout undo deployment nginx-deployment
+deployment.apps/nginx-deployment rolled back
+user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl get replicaset
+NAME                          DESIRED   CURRENT   READY   AGE
+nginx-deployment-575cffbfc6   2         2         1       9m21s
+nginx-deployment-579d7cd555   2         2         2       6m29s
+user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl get replicaset
+NAME                          DESIRED   CURRENT   READY   AGE
+nginx-deployment-575cffbfc6   3         3         3       9m23s
+nginx-deployment-579d7cd555   0         0         0       6m31s
+user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ 
+
+>>>THIS IS ONE OF THE FUNCTIONS OF REPLICASET<<<
+
+######################DEAMONSET####################################################################
+
+$ kubectl apply -f node-exporter-daemonset.yaml
+daemonset.apps/node-exporter created
+$ kubectl get daemonset
+NAME            DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+node-exporter   2         2         0       2            0           <none>          4s
+
+>> Checking pods 
+
+$ kubectl get pods -l app=node-exporter
+NAME                  READY   STATUS    RESTARTS   AGE
+node-exporter-rqnch   1/1     Running   0          3m55s
+node-exporter-zpdd8   1/1     Running   0          3m55s
+
+>>> Check in case its on all nodes of the cluster
+
+$ kubectl get pods -o wide -l app=node-exporter
+NAME                  READY   STATUS    RESTARTS   AGE     IP           NODE           NOMINATED NODE   READINESS GATES
+node-exporter-rqnch   1/1     Running   0          9m29s   172.18.0.3   kind-worker    <none>           <none>
+node-exporter-zpdd8   1/1     Running   0          9m29s   172.18.0.2   kind-worker2   <none>           <none>
+
+>>>And describe to see all details<<<
+
+$ kubectl describe daemonset node-exporter
+Name:           node-exporter
+Namespace:      default
+Selector:       app=node-exporter
+Node-Selector:  <none>
+Labels:         <none>
+Annotations:    deprecated.daemonset.template.generation: 1
+Desired Number of Nodes Scheduled: 2
+Current Number of Nodes Scheduled: 2
+Number of Nodes Scheduled with Up-to-date Pods: 2
+Number of Nodes Scheduled with Available Pods: 2
+Number of Nodes Misscheduled: 0
+Pods Status:  2 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  app=node-exporter
+  Containers:
+   node-exporter:
+    Image:        prom/node-exporter:latest
+    Port:         9100/TCP
+    Host Port:    9100/TCP
+    Environment:  <none>
+    Mounts:
+      /host/proc from proc (ro)
+      /host/sys from sys (ro)
+  Volumes:
+   proc:
+    Type:          HostPath (bare host directory volume)
+    Path:          /proc
+    HostPathType:  
+   sys:
+    Type:          HostPath (bare host directory volume)
+    Path:          /sys
+    HostPathType:  
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Events:
+  Type    Reason            Age   From                  Message
+  ----    ------            ----  ----                  -------
+  Normal  SuccessfulCreate  11m   daemonset-controller  Created pod: node-exporter-rqnch
+  Normal  SuccessfulCreate  11m   daemonset-controller  Created pod: node-exporter-zpdd8
+
