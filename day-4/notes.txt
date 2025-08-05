@@ -265,3 +265,250 @@ Events:
   Normal  SuccessfulCreate  11m   daemonset-controller  Created pod: node-exporter-rqnch
   Normal  SuccessfulCreate  11m   daemonset-controller  Created pod: node-exporter-zpdd8
 user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4
+
+####################PROBES############################################################
+Manifest
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nginx-liveness-tcp
+  name: nginx-liveness-tcp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-liveness-tcp
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx-liveness-tcp
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        resources:
+          limits:
+            cpu: 1
+            memory: "256Mi"
+          requests:  
+            cpu: 0.5
+            memory: "128Mi"
+        livenessProbe: 
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+
+$ kubectl create -f nginx-liveness-tcpSocket.yaml 
+deployment.apps/nginx-liveness-tcp created
+$ kubectl get deployment
+NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-liveness-tcp   3/3     3            3           16s
+$ kubectl get pods
+NAME                                  READY   STATUS    RESTARTS   AGE
+nginx-liveness-tcp-6b77dbc457-fpvfj   1/1     Running   0          24s
+nginx-liveness-tcp-6b77dbc457-jf4nm   1/1     Running   0          24s
+nginx-liveness-tcp-6b77dbc457-qclwm   1/1     Running   0          24s
+$ kubectl describe pods nginx-liveness-tcp-6b77dbc457-fpvfj
+Name:             nginx-liveness-tcp-6b77dbc457-fpvfj
+
+    Liveness:     tcp-socket :80 delay=10s timeout=5s period=10s #success=1 #failure=3
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-xndb4 (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  46s   default-scheduler  Successfully assigned default/nginx-liveness-tcp-6b77dbc457-fpvfj to kind-worker
+  Normal  Pulling    45s   kubelet            Pulling image "nginx"
+  Normal  Pulled     43s   kubelet            Successfully pulled image "nginx" in 1.425s (1.425s including waiting). Image size: 72223778 bytes.
+  Normal  Created    43s   kubelet            Created container: nginx
+  Normal  Started    43s   kubelet            Started container nginx
+
+>> In case of failure as EXAMPLE port is differ of 80 
+$ kubectl apply -f nginx-liveness-tcpSocket.yaml 
+Warning: resource deployments/nginx-liveness-tcp is missing the kubectl.kubernetes.io/last-applied-configuration annotation which is required by kubectl apply. kubectl apply should only be used on resources created declaratively by either kubectl create --save-config or kubectl apply. The missing annotation will be patched automatically.
+deployment.apps/nginx-liveness-tcp configured
+
+The previous POD is Recreated
+$ kubectl describe pods nginx-liveness-tcp-6b77dbc457-fpvfj
+Error from server (NotFound): pods "nginx-liveness-tcp-6b77dbc457-fpvfj" not found
+$ kubectl describe pods 
+Liveness:     tcp-socket :81 delay=10s timeout=5s period=10s #success=1 #failure=3
+
+Warning  Unhealthy  5s    kubelet            Liveness probe failed: dial tcp 10.244.1.9:81: connect: connection refused
+
+POD restating State instead Running
+$ kubectl get pods 
+NAME                                  READY   STATUS    RESTARTS      AGE
+nginx-liveness-tcp-7c8d9767c8-f9fgs   1/1     Running   4 (35s ago)   3m16s
+nginx-liveness-tcp-7c8d9767c8-k684m   1/1     Running   4 (42s ago)   3m22s
+nginx-liveness-tcp-7c8d9767c8-rcps6   1/1     Running   4 (38s ago)   3m19s
+
+>>> TRYING WITH httpGet
+
+kubectl get deployment
+NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-liveness-tcp   3/3     3            3           11s
+$ kubectl get pods
+NAME                                  READY   STATUS    RESTARTS   AGE
+nginx-liveness-tcp-8469976899-884rb   1/1     Running   0          15s
+nginx-liveness-tcp-8469976899-d9nn5   1/1     Running   0          16s
+nginx-liveness-tcp-8469976899-kghbt   1/1     Running   0          15s
+$ kubectl describe pods nginx-liveness-tcp-8469976899-884rb
+
+    Liveness:     http-get http://:80/ delay=10s timeout=5s period=10s #success=1 #failure=3
+
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  39s   default-scheduler  Successfully assigned default/nginx-liveness-tcp-8469976899-884rb to kind-worker2
+  Normal  Pulling    38s   kubelet            Pulling image "nginx"
+  Normal  Pulled     36s   kubelet            Successfully pulled image "nginx" in 1.543s (2.916s including waiting). Image size: 72223778 bytes.
+  Normal  Created    36s   kubelet            Created container: nginx
+  Normal  Started    35s   kubelet            Started container nginx
+
+>>>  In case of Failure as a differ endpoint
+
+$ kubectl describe pods nginx-liveness-http-fc5677498-kf9qj
+
+    Liveness:     http-get http://:80/balbertus delay=10s timeout=5s period=10s #success=1 #failure=3
+
+Events:
+  Type     Reason     Age               From               Message
+  ----     ------     ----              ----               -------
+  Normal   Scheduled  49s               default-scheduler  Successfully assigned default/nginx-liveness-http-fc5677498-kf9qj to kind-worker
+  Normal   Pulled     46s               kubelet            Successfully pulled image "nginx" in 1.411s (2.529s including waiting). Image size: 72223778 bytes.
+  Normal   Pulling    9s (x2 over 49s)  kubelet            Pulling image "nginx"
+  Warning  Unhealthy  9s (x3 over 29s)  kubelet            Liveness probe failed: HTTP probe failed with statuscode: 404
+  Normal   Killing    9s                kubelet            Container nginx failed liveness probe, will be restarted
+  Normal   Created    6s (x2 over 46s)  kubelet            Created container: nginx
+  Normal   Started    6s (x2 over 46s)  kubelet            Started container nginx
+  Normal   Pulled     6s                kubelet            Successfully pulled image "nginx" in 1.406s (2.981s including waiting). Image size: 72223778 bytes.
+user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$
+
+######################################################################3
+ReadinessProbe
+
+...
+ readinessProbe: 
+          exec:
+            command: 
+            - curl
+            - f
+            - http://localhost:80/  
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+
+user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl get pods
+NAME                                   READY   STATUS    RESTARTS   AGE
+nginx-liveness-http-fc5677498-ggjhl    0/1     Pending   0          18s
+nginx-liveness-http-fc5677498-h8dct    0/1     Pending   0          27s
+nginx-liveness-http-fc5677498-ktwh2    0/1     Pending   0          9s
+nginx-liveness-tcp-5788ffdddb-26p59    1/1     Running   0          7m15s
+nginx-liveness-tcp-5788ffdddb-h75xq    1/1     Running   0          15m
+nginx-liveness-tcp-5788ffdddb-wpfnl    1/1     Running   0          6m50s
+nginx-readiness-tcp-768d48b85f-fmhv2   1/1     Running   0          3m57s
+nginx-readiness-tcp-768d48b85f-h7qrs   0/1     Running   0          3m57s
+nginx-readiness-tcp-768d48b85f-mhtmf   1/1     Running   0          3m57s
+
+See on describe output
+
+.....
+    Liveness:     tcp-socket :80 delay=10s timeout=5s period=10s #success=1 #failure=3
+    Readiness:    exec [curl f http://localhost:80/] delay=10s timeout=5s period=10s #success=1 #failure=3
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-ktrgw (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-ktrgw:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age    From               Message
+  ----     ------            ----   ----               -------
+  Warning  FailedScheduling  4m25s  default-scheduler  0/3 nodes are available: 1 node(s) had untolerated taint {node-role.kubernetes.io/control-plane: }, 2 Insufficient cpu. preemption: 0/3 nodes are available: 1 Preemption is not helpful for scheduling, 2 No preemption victims found for incoming pod.
+  Normal   Scheduled         54s    default-scheduler  Successfully assigned default/nginx-readiness-tcp-768d48b85f-mhtmf to kind-worker2
+  Normal   Pulling           54s    kubelet            Pulling image "nginx"
+  Normal   Pulled            52s    kubelet            Successfully pulled image "nginx" in 1.576s (1.576s including waiting). Image size: 72223946 bytes.
+  Normal   Created           52s    kubelet            Created container: nginx
+  Normal   Started           52s    kubelet            Started container nginx
+
+#############################
+Startup probe
+......
+startupProbe: 
+          httpGet: # 'lveness Probe by httpGet'
+            path: / #'It is the endpoint to be used'
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+
+.....
+    Liveness:     tcp-socket :80 delay=10s timeout=5s period=10s #success=1 #failure=3
+    Readiness:    exec [curl f http://localhost:80/] delay=10s timeout=5s period=10s #success=1 #failure=3
+    Startup:      http-get http://:80/ delay=10s timeout=5s period=10s #success=1 #failure=3
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-8lphz (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-8lphz:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age    From               Message
+  ----     ------            ----   ----               -------
+  Warning  FailedScheduling  2m46s  default-scheduler  0/3 nodes are available: 1 node(s) had untolerated taint {node-role.kubernetes.io/control-plane: }, 2 Insufficient cpu. preemption: 0/3 nodes are available: 1 Preemption is not helpful for scheduling, 2 No preemption victims found for incoming pod.
+  Normal   Scheduled         53s    default-scheduler  Successfully assigned default/nginx-startup-http-6566599478-4hrrd to kind-worker2
+  Normal   Pulling           53s    kubelet            Pulling image "nginx"
+  Normal   Pulled            52s    kubelet            Successfully pulled image "nginx" in 1.6s (1.6s including waiting). Image size: 72223946 bytes.
+  Normal   Created           51s    kubelet            Created container: nginx
+  Normal   Started           51s    kubelet            Started container nginx
