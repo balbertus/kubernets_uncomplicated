@@ -1164,5 +1164,14 @@ Events:
   Type    Reason            Age   From                  Message
   ----    ------            ----  ----                  -------
   Normal  SuccessfulCreate  11m   daemonset-controller  Created pod: node-exporter-rqnch
+
+######################################################################################################
+DAY 5 - Instalar um Cluster Kubernetes com 3 nodes.
+
+We are going to start with kubeadm by instances created on the cloud as AWS/GCP/Azure or where you want.
+
+
+
+
   Normal  SuccessfulCreate  11m   daemonset-controller  Created pod: node-exporter-zpdd8
 
