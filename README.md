@@ -1214,6 +1214,8 @@ After kubeadm installation as result bellow:
 #kubeadm set on hold
 #kubectl set on hold
 
+<img width="1437" height="190" alt="image" src="https://github.com/user-attachments/assets/4c3e208d-0e1f-43ee-8462-50467e72315a" />
+
 Check in case Container runtime is installed. (containerd)
 
 if not follow instructions bellow
@@ -1272,13 +1274,18 @@ get command line started in kubeadm join <your ip>
 
 Install CNI - network plugin
 
+<img width="1295" height="427" alt="image" src="https://github.com/user-attachments/assets/39b7e2fb-1102-440b-bc32-0b92c7e53d69" />
+
 >>>>>> screenshot <<<<<<<<
 
 After that just play with one deployment
 
 #kubeectl create deployment nginx --image nginx --replicas 3
 
+<img width="797" height="165" alt="image" src="https://github.com/user-attachments/assets/9708d4f1-5407-4cfe-8175-0c6ff5707d76" />
+
 >>>>> screen shot <<<<<
+
 
 
 
