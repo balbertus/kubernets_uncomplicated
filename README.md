@@ -1168,6 +1168,8 @@ Events:
 ######################################################################################################
 DAY 5 - Instalar um Cluster Kubernetes com 3 nodes.
 
+We are going to start with kubeadm by instances created on the cloud as AWS/GCP/Azure or where you want.
+
 Install a cluster with kubeadm!
 
 1. Create 3 instances at AWS, GCP or Azure (it's about your cloud environment, I am not going to show here)
@@ -1282,15 +1284,109 @@ After that just play with one deployment
 
 <img width="797" height="165" alt="image" src="https://github.com/user-attachments/assets/9708d4f1-5407-4cfe-8175-0c6ff5707d76" />
 
->>>>> screen shot <<<<<
+>>>>> screen shot <<<<<<
 
 
+########################################################################################################################################
+Day-6 - Storage Class
+
+Storage Class is a object that descruve and determine storages available for clusters. Persistent Volumes (PVs) and Persistent Volumes Claims (PVCs).
+
+See all storages classes available in your cluster...
+
+#kubectl get storageclass
+
+$  kubectl get storageclass
+NAME                 PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+balbertus-local      kubernetes.io/no-provisioner   Retain          WaitForFirstConsumer   false                  6d6h
+standard (default)   rancher.io/local-path          Delete          WaitForFirstConsumer   false                  6d7h
+
+rancher.io/local-path, is a default provisioner provided by Kind.
 
 
-We are going to start with kubeadm by instances created on the cloud as AWS/GCP/Azure or where you want.
+You can create a new Storage Class to create a Persitent Volume on host directory - kind kubernetes.io/host-path.
+
+Manifest:
+$ cat pv.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name:  balbertus-2
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
 
 
+$ kubectl apply -f pv.yaml 
+storageclass.storage.k8s.io/balbertus-2 created
+balbertus@HP-ProBook-440-G1:~/PICK/kubernets_uncomplicated/day-6$ kubectl get storageclass
+NAME                 PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+balbertus-2          kubernetes.io/no-provisioner   Retain          WaitForFirstConsumer   false                  20s
+standard (default)   rancher.io/local-path          Delete          WaitForFirstConsumer   false                  6d7h
+balbertus@HP-ProBook-440-G1:~/PICK/kubernets_uncomplicated/day-6$
+
+Use describe to see all details of this new Storage Class
+
+$ kubectl describe storageclass balbertus-2
+Name:            balbertus-2
+IsDefaultClass:  No
+Annotations:     kubectl.kubernetes.io/last-applied-configuration={"apiVersion":"storage.k8s.io/v1","kind":"StorageClass","metadata":{"annotations":{},"name":"balbertus-2"},"provisioner":"kubernetes.io/no-provisioner","reclaimPolicy":"Retain","volumeBindingMode":"WaitForFirstConsumer"}
+
+Provisioner:           kubernetes.io/no-provisioner
+Parameters:            <none>
+AllowVolumeExpansion:  <unset>
+MountOptions:          <none>
+ReclaimPolicy:         Retain
+VolumeBindingMode:     WaitForFirstConsumer
+Events:                <none>
+
+>>>>PV<<<<<
+
+Persiste Volume (PV) is a resource to physical storage into a cluster. That would be local or remote.
+
+Local:
+HostPath
+
+Remote: (Network)
+NFS
+iSCSI
+Cloud Providers
+
+See in case your PV
+
+#kubectl get pv -A
+
+$ kubectl get pv -A
+No resources found
+
+Go ahead to create your PV
+
+Manifest:
+pv.yaml
+$ cat pv.yaml 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name:  balbertus-pv
+  labels: 
+    type: local
+spec: 
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/mnt/data"
+  storageClassName: balbertus-2
 
 
-  Normal  SuccessfulCreate  11m   daemonset-controller  Created pod: node-exporter-zpdd8
+#kubectl apply -f pv.yaml
+
+$ kubectl get pv
+NAME           CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+balbertus-pv   1Gi        RWO            Retain           Available           balbertus-2    <unset>                          15s
+
+>>>>> PVC <<<<<<
+
 
