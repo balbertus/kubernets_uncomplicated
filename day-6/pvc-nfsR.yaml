@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name:  balbertus-pvc-nfsr
+spec: 
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: nfs-rancher
+    #selector:
+    #matchLabels:
+    #storage: nfs-rancher

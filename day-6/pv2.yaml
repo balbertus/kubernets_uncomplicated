@@ -1,16 +1,15 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name:  balbertus2-pv-nfs
+  name:  balbertus2-pv
   labels: 
-    type: nfs
+    type: local
 spec: 
   capacity:
     storage: 1Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  nfs:
-    server: 192.168.0.18
-    path: "/mnt/nfs/"
-  storageClassName: nfs
+  hostPath:
+    path: "/mnt/nfs"
+  storageClassName: balbertus-2
