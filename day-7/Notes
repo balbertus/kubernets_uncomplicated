@@ -1,0 +1,20 @@
+Day 7 
+> StatefulSet
+This is about functions to manage implementations(Deployment) and scaling of pods set, providing garantees over deployments request ans sungularity these pods.
+Its opposite of Deployments and Replicasets that work as stateless. Each pod created with statefulset has a persistent sumary and a hostname that linked your identity.
+> HeadLess Service
+Work together statefulset. This is responsible by allowing comunication between pods across the network while manage the deployment andscaling these pods.
+
+Example:
+If you have a Statefulset called application with 3 replica and 1 Headless called nginx, the pods created are application-0, application-1, application-2 and them will have host address (DNS) as:
+application-0.nginx.default.svc.cluster.local,
+application-1.nginx.default.svc.cluster.local,
+application-2.nginx.default.svc.cluster.local,
+
+Its stable and predictable, making easy comunications between different instancies of the same application.
+> Services:
+    ClusterIP
+    NodePort
+    LoadBalancer
+    ExternalName
+    
