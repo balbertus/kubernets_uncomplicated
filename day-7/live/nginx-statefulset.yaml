@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: StatefulSet # kind of resource that We are creating here
+metadata:
+  name: nginx
+spec:
+  serviceName: "nginx"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www
+          mountpath: /usr/share/nginx/html
+  volumeClaimTemplates: # StatefulSet needs a volume template for each pod
+  - metadate:
+      name: www #name of volume. So will be created www-0. www-1, www-2
+    spec:
+      accessMode: ["ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
