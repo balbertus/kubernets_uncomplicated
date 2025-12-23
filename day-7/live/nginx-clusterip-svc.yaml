@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service #Object type, in this case a Service
+metadata:
+  name: my-service
+spec:
+  selector: #Select Pods that will be exposed by Service
+    app: my-app # in this case Pods with labels app=my-app
+  ports:
+    - protocol: TCP
+      port: 80 # Service Port
+      targetPort: 8080 # Pods port
+
+#The Kubernetes by default will create a ClusterIP by default when We don't specify the field "type" on spec.
