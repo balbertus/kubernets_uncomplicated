@@ -12,5 +12,6 @@ spec:
   - port: 80
     name: http
     targetPort: 80
-    nodePort: 32000
+    nodePort: 32000 # must be between 30000 and 32767, when We do not spec a field Kubernetes will choose any number port into this range.
   type: NodePort
+
