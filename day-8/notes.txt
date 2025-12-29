@@ -1,0 +1,10 @@
+day-8
+> Secrets
+Are stored inside etcd
+	its not encripted by default
+	by default its on Base64
+https://kubernetes.io/docs/concepts/configuration/secret/
+
+> ConfigMaps
+
+https://kubernetes.io/docs/concepts/configuration/configmap/
