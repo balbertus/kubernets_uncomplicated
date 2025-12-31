@@ -173,6 +173,58 @@ Forwarding from [::1]:3000 -> 3000
 Handling connection for 3000
 Handling connection for 3000
 
+Deep diving on the services We can get any services in details w/ service monitor
+
+$kubectl get servicemonitor prometheus-k8s -n monitoring -o yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"monitoring.coreos.com/v1","kind":"ServiceMonitor","metadata":{"annotations":{},"labels":{"app.kubernetes.io/component":"prometheus","app.kubernetes.io/instance":"k8s","app.kubernetes.io/name":"prometheus","app.kubernetes.io/part-of":"kube-prometheus","app.kubernetes.io/version":"3.8.1"},"name":"prometheus-k8s","namespace":"monitoring"},"spec":{"endpoints":[{"interval":"30s","port":"web"},{"interval":"30s","port":"reloader-web"}],"selector":{"matchLabels":{"app.kubernetes.io/component":"prometheus","app.kubernetes.io/instance":"k8s","app.kubernetes.io/name":"prometheus","app.kubernetes.io/part-of":"kube-prometheus"}}}}
+  creationTimestamp: "2025-12-31T13:59:31Z"
+  generation: 1
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: kube-prometheus
+    app.kubernetes.io/version: 3.8.1
+  name: prometheus-k8s
+  namespace: monitoring
+  resourceVersion: "7282"
+  uid: 820fb8e2-301a-4803-8443-20372fa66646
+spec:
+  endpoints:
+  - interval: 30s
+    port: web
+  - interval: 30s
+    port: reloader-web
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: prometheus
+      app.kubernetes.io/instance: k8s
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: kube-prometheus
+
+Or any other 
+
+$ kubectl get servicemonitors -n monitoring
+NAME                      AGE
+alertmanager-main         37m
+blackbox-exporter         37m
+coredns                   36m
+grafana                   36m
+kube-apiserver            36m
+kube-controller-manager   36m
+kube-scheduler            36m
+kube-state-metrics        36m
+kubelet                   36m
+node-exporter             36m
+prometheus-adapter        36m
+prometheus-k8s            36m
+prometheus-operator       36m
+
 
 
 
