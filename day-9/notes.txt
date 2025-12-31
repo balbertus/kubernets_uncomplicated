@@ -1,0 +1,183 @@
+day-9 - Observability
+
+Kube-Prometheus is a project created based on Prometheus Operator that permit to monitor a Kubernetes Cluster.
+
+Also on this same day We are able to use Prometheus Adapter as source of data for Horizontal Pod Escaler.
+
+It means  Prometheus make an auto-scaling for our Pod.
+
+https://github.com/balbertus/kube-prometheus_pick25
+
+Tools to create a K8s Cluster (AWS)
+- eksctl
+https://docs.aws.amazon.com/eks/latest/eksctl/what-is-eksctl.html
+
+# for ARM systems, set ARCH to: `arm64`, `armv6` or `armv7`
+ARCH=amd64
+PLATFORM=$(uname -s)_$ARCH
+
+curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$PLATFORM.tar.gz"
+
+# (Optional) Verify checksum
+curl -sL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_checksums.txt" | grep $PLATFORM | sha256sum --check
+
+tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
+
+sudo install -m 0755 /tmp/eksctl /usr/local/bin && rm /tmp/eksctl
+
+
+- awscli
+https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+Since it is installed you need to run aws configure to set your AWS user and credentials...
+
+So, to start Cluster creation run EKSCTL as bellow:
+
+eksctl create cluster --name=eks-cluster --version=1.24 --region=us-east-1 --nodegroup-name=eks-cluster-nodegroup --node-type=t3.medium --nodes=2 --nodes-min=1 --nodes-max=3 --managed
+
+After cluster create done We need to configure our kubectl to access our new EKS cluster
+
+aws eks --region us-east-1 update-kubeconfig --name eks-cluster
+
+example:
+$ aws eks --region us-east-1 update-kubeconfig --name eks-cluster
+Added new context arn:aws:eks:us-east-1:428865498121:cluster/eks-cluster to /home/balbertus/.kube/config
+
+Test w/ this command
+
+kubectl get nodes
+$ kubectl get nodes
+NAME                             STATUS   ROLES    AGE     VERSION
+ip-192-168-29-167.ec2.internal   Ready    <none>   5m31s   v1.34.2-eks-ecaa3a6
+ip-192-168-33-250.ec2.internal   Ready    <none>   5m32s   v1.34.2-eks-ecaa3a6
+
+Also you can use EKSCTL to check
+
+$ eksctl get cluster -r us-east-1
+NAME		REGION		EKSCTL CREATED
+eks-cluster	us-east-1	True
+
+So congrats ! our cluster EKS is here and alive.
+
+Its time to starting Kube-Prometheus
+
+git clone https://github.com/prometheus-operator/kube-prometheus
+cd kube-prometheus
+kubectl create -f manifests/setup
+
+Repository cloning and preparing all necessary to install Kube-Prometheus
+
+$ git clone https://github.com/prometheus-operator/kube-prometheus
+cd kube-prometheus
+kubectl create -f manifests/setup
+Cloning into 'kube-prometheus'...
+remote: Enumerating objects: 22260, done.
+remote: Counting objects: 100% (8/8), done.
+remote: Compressing objects: 100% (7/7), done.
+remote: Total 22260 (delta 2), reused 2 (delta 1), pack-reused 22252 (from 1)
+Receiving objects: 100% (22260/22260), 14.60 MiB | 24.03 MiB/s, done.
+Resolving deltas: 100% (15590/15590), done.
+customresourcedefinition.apiextensions.k8s.io/alertmanagerconfigs.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/alertmanagers.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/podmonitors.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/probes.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/prometheuses.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/prometheusagents.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/prometheusrules.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/scrapeconfigs.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/servicemonitors.monitoring.coreos.com created
+customresourcedefinition.apiextensions.k8s.io/thanosrulers.monitoring.coreos.com created
+namespace/monitoring created
+
+This is CRDs (customresourcedefinition) that works as Kubernetes extensions.
+
+prove w/
+
+kubectl get servicemonitors -A
+
+$ kubectl get servicemonitors -A
+NAMESPACE    NAME                      AGE
+monitoring   alertmanager-main         3m3s
+monitoring   blackbox-exporter         2m58s
+monitoring   coredns                   2m22s
+monitoring   grafana                   2m30s
+monitoring   kube-apiserver            2m23s
+monitoring   kube-controller-manager   2m22s
+monitoring   kube-scheduler            2m21s
+monitoring   kube-state-metrics        2m24s
+monitoring   kubelet                   2m20s
+monitoring   node-exporter             2m16s
+monitoring   prometheus-adapter        119s
+monitoring   prometheus-k8s            2m6s
+monitoring   prometheus-operator       115s
+
+Next We can install Prometheus and alertmanagers
+
+kubectl apply -f manifests/
+
+This will install Kube-Prometheus stack as:
+Prometheus
+AlertManager
+BlackBox Exporter
+Grafana
+
+prove w/
+
+kubectl get pods -n monitoring
+
+$ kubectl get pods -n monitoring
+NAME                                   READY   STATUS    RESTARTS   AGE
+alertmanager-main-0                    2/2     Running   0          75s
+alertmanager-main-1                    2/2     Running   0          75s
+alertmanager-main-2                    2/2     Running   0          75s
+blackbox-exporter-88d8b5df8-sxg2f      3/3     Running   0          2m23s
+grafana-75c69db57b-qzk6c               1/1     Running   0          115s
+kube-state-metrics-67bc5d6db8-j2qkx    3/3     Running   0          110s
+node-exporter-nwdt4                    2/2     Running   0          101s
+node-exporter-rbm8c                    2/2     Running   0          101s
+prometheus-adapter-6c5fcc994f-drtqv    1/1     Running   0          83s
+prometheus-adapter-6c5fcc994f-lshl5    1/1     Running   0          83s
+prometheus-k8s-0                       2/2     Running   0          75s
+prometheus-k8s-1                       2/2     Running   0          75s
+prometheus-operator-75bd6545cb-vmtvb   2/2     Running   0          80s
+
+check service as bellow
+
+$ kubectl get service -A
+NAMESPACE     NAME                        TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                        AGE
+default       kubernetes                  ClusterIP   10.100.0.1       <none>        443/TCP                        56m
+kube-system   eks-extension-metrics-api   ClusterIP   10.100.160.173   <none>        443/TCP                        56m
+kube-system   kube-dns                    ClusterIP   10.100.0.10      <none>        53/UDP,53/TCP,9153/TCP         53m
+kube-system   kubelet                     ClusterIP   None             <none>        10250/TCP,10255/TCP,4194/TCP   16m
+kube-system   metrics-server              ClusterIP   10.100.149.230   <none>        443/TCP                        48m
+monitoring    alertmanager-main           ClusterIP   10.100.121.56    <none>        9093/TCP,8080/TCP              17m
+monitoring    alertmanager-operated       ClusterIP   None             <none>        9093/TCP,9094/TCP,9094/UDP     16m
+monitoring    blackbox-exporter           ClusterIP   10.100.14.195    <none>        9115/TCP,19115/TCP             17m
+monitoring    grafana                     ClusterIP   10.100.202.129   <none>        3000/TCP                       17m
+monitoring    kube-state-metrics          ClusterIP   None             <none>        8443/TCP,9443/TCP              17m
+monitoring    node-exporter               ClusterIP   None             <none>        9100/TCP                       17m
+monitoring    prometheus-adapter          ClusterIP   10.100.148.198   <none>        443/TCP                        16m
+monitoring    prometheus-k8s              ClusterIP   10.100.159.54    <none>        9090/TCP,8080/TCP              16m
+monitoring    prometheus-operated         ClusterIP   None             <none>        9090/TCP                       16m
+monitoring    prometheus-operator         ClusterIP   None             <none>        8443/TCP                       16m
+
+You can export to access on your local machine using port-foward as bellow
+
+$ kubectl port-forward -n monitoring svc/grafana 3000:3000
+Forwarding from 127.0.0.1:3000 -> 3000
+Forwarding from [::1]:3000 -> 3000
+Handling connection for 3000
+Handling connection for 3000
+
+
+
+
+
+
+
+
+
