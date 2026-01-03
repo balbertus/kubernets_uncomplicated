@@ -6,12 +6,11 @@ So you also can take a look at my another repository dedicated to Containers (Do
 
 I tried to follow all contents and follow by days and create my personal notes to study and remmember all topics with command line outputs and example. 
 
-#########################################################################################################################################################
+##########################################################################################################
 The objectve here is learning with pratical labs and demonstrations to prove knowledge and adquire skills.
 
 
-###########################################################################################################################
-
+##########################################################################################################
 DAY -2 - Hadling a manifest file and PODs 
 pod yaml manifest
 
