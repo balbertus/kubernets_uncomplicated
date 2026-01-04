@@ -1,0 +1,40 @@
+Day-12
+
+What is Cert-Manager: Its a tool that permit you manager your certificate inside Kubernetes.
+(Cloud Native)
+reference:
+https://cert-manager.io/docs/
+
+Letsencrypt.
+Issuer - valid only on namespace
+CLusterIssuer - valid for entire cluster (Prod)
+ 
+> Install and Configure Cert-Manager
+Example applied on a EKS Cluster (AWS) already created and working
+
+$ kubectl get nodes
+
+$ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.19.2/cert-manager.yaml
+
+By default, cert-manager will be installed into the cert-manager namespace. It is possible to run cert-manager in a different namespace, although you'll need to make modifications to the deployment manifests.
+
+Once you've installed cert-manager, you can verify it is deployed correctly by checking the cert-manager namespace for running pods:
+
+$ kubectl get pods --namespace cert-manager
+
+Definiton of Issuer
+
+Manifest
+
+
+$ kubectl apply -f letsencrypt-issuers/staging_issuer.yaml
+
+$ kubectl apply -f letsencrypt-issuers/production_issuer.yaml
+
+> Configure Ingress for Cert-Manager and get HTTPS
+> What is Annotations and Labels
+> Add Authentication on Ingress
+> Affinity Cookie on Ingress
+> Upstream Hashing on Ingress
+> Canary Deployment with Ingress
+> Put requests limits on an App with Ingress 
