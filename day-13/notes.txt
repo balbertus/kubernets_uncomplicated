@@ -1,0 +1,189 @@
+Day-13: HPA
+
+1.What is a Horizontal Pod Autoscaler
+
+You can adjust automacaly the number of replicas for a group of pods
+Monitor metrics applied at Pod and make decisions to scale up
+
+2. The Metrics Server
+
+Metrics Servers needs to be installed because is the important resource to HPA.
+
+It is a agregator of Metrics that collect CPU and Memory about nodes and CLusterIssuer
+
+How to install Metrics Server
+
+Cluster EKS and Cluster KinD
+$ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/componets.yaml
+
+checking:
+
+$ kubectl get pods -n kube-system | grep metrics-server
+
+After installed use reference bellow to get some outputs
+
+$ kubectl top nodes
+$ kubectl yop pods
+
+3. Creating an HPA
+
+#Definition of the one Deployment to a NGINX Server.
+$ nginx-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 3
+  selector: 
+    matchLabels:
+      app: nginx # label the identify the pods for this deployment
+  template:
+    metadata:
+      labels:
+        app: nginx # label applied to pods 
+    spec:
+      containers:
+      - name: nginx # Name of container
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 250m
+            memory: 128Mi
+
+# HPA creation and configuration
+# Definition of HPA to nginx-deployment
+$ nginx-deployment-hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-deployment-hpa # HPA name
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: resource
+    resource:
+      name: cpu
+      target: 
+        type: Utilization
+        averageUtilization: 50
+
+This HPA configuration will put attention on CPU Utilization about 50% adjust the number of replicas beteween 3 and 10 as Necessary.
+
+Since its up and running We can prove it 
+
+Run:
+$ kubectl run -i --tty load-generator --image=busybox /bin/sh
+
+while true; do wget -q -0 http://nginx-deployment.default.svc.cluster.local; done
+
+This is a script to cause some payload doing continuos requests at NGINX server.
+See HPA handling replicas to keep CPU utilization under control.
+
+# HPA definition based on memory
+$ nginx-deployment-hpa-memory.yaml
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-deployment-hpa-memory
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
+
+On this Example HPA will adjust replicas t keep a Memory usage in 70%.
+
+In summary 
+
+1. Instal Metrics Servers
+
+verify
+$ kubectl get pods -n kube-system |grep metrics-server
+
+2. Create a Deployment
+$ kubectl get pod
+3. $ kubectl expose deployment nginx 
+   $ kubectl get svc
+4. Create a HPA (CPU and Memory)
+$ kubectl get hpa
+$ kubectl get pod
+5. Run stress Test
+Run:
+$ kubectl run -i --tty load-generator --image=busybox /bin/sh
+
+while true; do wget -q -0 http://nginx-deployment.default.svc.cluster.local; done
+
+> Advanced ScaleUp and ScaleDown configuration
+
+Adding behavior parameters
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-deployment-hpa-memory
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target: 
+        type: Utilization
+        averageUtilization: 50
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 50
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 5
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 10
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 10
+
+> Using metric ContainerResource with HPA
+
+Add a metric to container instead of Pod or include Pod and ContainerResource
+
+It means specific metrics to container  inside a pod. Its import when you have multiples container in a POd and need to scale based on resources from one  specific container.
+
+Algorithm details
+
+See:
+https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/
+
