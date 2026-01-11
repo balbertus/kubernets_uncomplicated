@@ -1,0 +1,88 @@
+Day-10 - Observability
+
+The Service Monitors are the main resouce used by Kube-Prometheus, it is a Prometheus Operator that's allow to configure Prometheus to monitor a service.
+
+To do that you need to create one ServiceMonitor for each service you desire to monitor.
+
+The ServiceMonitor define the group of endpoints to be monitor by Prometheus and also provide endpoint path and ports, should be used to monitor the endpoints of the application or a servce in a Kubernets Cluster.
+
+Kube-Prometheus is already configured with many ServicesMonitors:
+Example: API Server, Node exporter, Blackbox Exporter
+
+$ kubectl get servicemonitor prometheus-k8s -n monitoring -o yaml
+
+###
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  annotations:
+  labels:
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/instance: k8s
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: kube-prometheus
+    app.kubernetes.io/version: 2.41.0
+  name: prometheus-k8s
+  namespace: monitoring
+spec:
+  endpoints:
+  - interval: 30s
+    port: web
+  - interval: 30s
+    port: reload-web
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: prometheus
+      app.kubernetes.io/instance: k8s
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/part-of: kube-prometeus
+
+ServiceMonitor Creation:
+
+
+First just go to create a application to be monitor
+
+1. ConfigMap - nginx-config.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    server { 
+        listen 80;
+        location / {
+            root /usr/share/nginx/html;
+            index index.html index.htm;
+        }
+        location /metrics {
+            stub_status on;
+            access_log off;
+        }
+    }
+
+$ kubectl apply -f nginx-config.yaml
+
+$ kubectl get configmaps
+
+2. Create our application
+
+see nginx-deployment.yaml
+
+$ kubectl apply -f nginx-deployment.yaml
+
+$ kubectl get pods
+
+$ kubectl get deployments
+
+3. Create a Service to expose our Deployment.
+
+see nginx-service.yaml
+
+$ kubectl apply -f nginx-service.yaml
+
+$ kubectl get svc
+
+
+
