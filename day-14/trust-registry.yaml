@@ -1,0 +1,20 @@
+apiVersion: kyverno.io/v1
+kind: Policy #valid only for namespace level
+metadata:
+  name: ensure-images-from-trusted-registry
+  namespace: spigariol
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: trusted-registry
+    match:
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "Only images from Chainguard"
+      pattern:
+        spec:
+          containers:
+          - name: "*"
+            image: "cgr.dev/chainguard/*"
