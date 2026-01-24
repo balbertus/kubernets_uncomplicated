@@ -1,0 +1,296 @@
+Day-14 - Kyverno
+
+Its a tools to Policies Management dedicated to tasks automation regarding security and cluster configuration. Kyverno enable you to define. manager and apply policiesusing manifest files to garantee clusters and workloads working according your compliance definitions.
+
+mode Enforce 
+mode Audit
+
+Functions
+1. Resources validations: Validate if K8s resources is on compliance and corporate definitions.
+E.g: 
+Pods needs CPU and Memory limitations
+
+2. Resources Mutations: Autamaticaly modify K8s resources to attend policies definitions
+E.g:
+Could add automatically specific labels for all new pods.
+
+3. Resource Generation: Create aditional resources to K8s based on licies definitions.
+E.g:
+Generate Network Policies for each new namespace created.
+
+Important:
+Its recommendation to install Kyverno trought Helm to get more controlls
+
+Let's go:
+
+First make sure you have helm
+
+$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+$ chmod 700 get_helm.sh
+$ ./get_helm.sh
+
+or
+
+From apt
+
+sudo apt-get install curl gpg apt-transport-https --yes
+curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt-get update
+sudo apt-get install helm
+
+See documentation
+
+https://helm.sh/docs/intro/install/
+
+Kyverno Installation
+https://kyverno.io/docs/installation/methods/#standalone-installation
+
+$ helm repo add kyverno https://kyverno.github.io/kyverno/
+$ helm repo update
+$ helm install kyverno kyverno/kyverno -n kyverno --create-namespace
+
+...
+NAME: kyverno
+LAST DEPLOYED: Sat Jan 24 10:15:38 2026
+NAMESPACE: kyverno
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+NOTES:
+Chart version: 3.6.2
+Kyverno version: v1.16.2
+
+The following components have been installed in your cluster:
+- CRDs
+- Admission controller
+- Reports controller
+- Cleanup controller
+- Background controller
+
+Also verify CRDs
+$ kubectl get crd | grep kyverno
+cleanuppolicies.kyverno.io                              2026-01-24T13:15:41Z
+clustercleanuppolicies.kyverno.io                       2026-01-24T13:15:41Z
+clusterephemeralreports.reports.kyverno.io              2026-01-24T13:15:41Z
+clusterpolicies.kyverno.io                              2026-01-24T13:15:41Z
+deletingpolicies.policies.kyverno.io                    2026-01-24T13:15:41Z
+ephemeralreports.reports.kyverno.io                     2026-01-24T13:15:41Z
+generatingpolicies.policies.kyverno.io                  2026-01-24T13:15:41Z
+globalcontextentries.kyverno.io                         2026-01-24T13:15:41Z
+imagevalidatingpolicies.policies.kyverno.io             2026-01-24T13:15:41Z
+mutatingpolicies.policies.kyverno.io                    2026-01-24T13:15:41Z
+namespaceddeletingpolicies.policies.kyverno.io          2026-01-24T13:15:41Z
+namespacedimagevalidatingpolicies.policies.kyverno.io   2026-01-24T13:15:41Z
+namespacedvalidatingpolicies.policies.kyverno.io        2026-01-24T13:15:41Z
+policies.kyverno.io                                     2026-01-24T13:15:42Z
+policyexceptions.kyverno.io                             2026-01-24T13:15:41Z
+policyexceptions.policies.kyverno.io                    2026-01-24T13:15:41Z
+updaterequests.kyverno.io                               2026-01-24T13:15:41Z
+validatingpolicies.policies.kyverno.io                  2026-01-24T13:15:41Z
+
+And Pods
+
+$ kubectl get pods -n kyverno
+NAME                                             READY   STATUS    RESTARTS   AGE
+kyverno-admission-controller-996f464cf-b4mgb     1/1     Running   0          14m
+kyverno-background-controller-78cd749c96-cdbgm   1/1     Running   0          14m
+kyverno-cleanup-controller-6f4b54b9-rtbt7        1/1     Running   0          14m
+kyverno-reports-controller-5bdf98595-cjrck       1/1     Running   0          14m
+
+Creating our policy
+Manifest
+$ cat require-resources-limits.yaml 
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resources-limitss
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: validate-limits
+    match:
+      resources: 
+        kinds: 
+        - Pod
+    validate:
+      message: "Needs limits definitions for resources or CPU and Momory required"
+      pattern:
+        spec:
+          containers:
+           - name: "*"
+             resources:
+              limits:
+                cpu: "?*"
+                memory: "?*"
+
+Apply this
+
+$ kubectl pply -f require-resources-limits.yaml
+
+$ kubectl get kyverno
+NAME                                                 ADMISSION   BACKGROUND   READY   AGE   MESSAGE
+clusterpolicy.kyverno.io/require-resources-limitss   true        true         True    37s   Ready
+$ kubectl describe clusterpolicy.kyverno.io/require-resources-limitss
+Name:         require-resources-limitss
+Namespace:    
+Labels:       <none>
+Annotations:  <none>
+API Version:  kyverno.io/v1
+Kind:         ClusterPolicy
+Metadata:
+  Creation Timestamp:  2026-01-24T13:53:37Z
+  Generation:          1
+  Resource Version:    39574
+  UID:                 0b661c09-b260-4d78-afcb-ddd5794c2372
+Spec:
+  Admission:     true
+  Background:    true
+  Emit Warning:  false
+  Rules:
+    Match:
+      Resources:
+        Kinds:
+          Pod
+    Name:                      validate-limits
+    Skip Background Requests:  true
+    Validate:
+      Allow Existing Violations:  true
+      Message:                    Needs imits definitions for resources
+      Pattern:
+        Spec:
+          Containers:
+            Name:  *
+            Resources:
+              Limits:
+                Cpu:          ?*
+                Memory:       ?*
+  Validation Failure Action:  Enforce
+Status:
+  Autogen:
+    Rules:
+      Match:
+        Resources:
+          Kinds:
+            DaemonSet
+            Deployment
+            Job
+            ReplicaSet
+            ReplicationController
+            StatefulSet
+      Name:                      autogen-validate-limits
+      Skip Background Requests:  true
+      Validate:
+        Allow Existing Violations:  true
+        Message:                    Needs imits definitions for resources
+        Pattern:
+          Spec:
+            Template:
+              Spec:
+                Containers:
+                  Name:  *
+                  Resources:
+                    Limits:
+                      Cpu:     ?*
+                      Memory:  ?*
+      Match:
+        Resources:
+          Kinds:
+            CronJob
+      Name:                      autogen-cronjob-validate-limits
+      Skip Background Requests:  true
+      Validate:
+        Allow Existing Violations:  true
+        Message:                    Needs imits definitions for resources
+        Pattern:
+          Spec:
+            Job Template:
+              Spec:
+                Template:
+                  Spec:
+                    Containers:
+                      Name:  *
+                      Resources:
+                        Limits:
+                          Cpu:     ?*
+                          Memory:  ?*
+  Conditions:
+    Last Transition Time:  2026-01-24T13:53:37Z
+    Message:               Ready
+    Reason:                Succeeded
+    Status:                True
+    Type:                  Ready
+  Rulecount:
+    Generate:      0
+    Mutate:        0
+    Validate:      1
+    Verifyimages:  0
+  Validatingadmissionpolicy:
+    Generated:  false
+    Message:    
+Events:
+  Type     Reason           Age   From          Message
+  ----     ------           ----  ----          -------
+  Warning  PolicyViolation  61s   kyverno-scan  DaemonSet kube-system/kube-proxy: [autogen-validate-limits] fail; validation error: Needs imits definitions for resources. rule autogen-validate-limits failed at path /spec/template/spec/containers/0/resources/limits/
+
+
+
+Apply a Simple pod whitout CPU and Memory limits
+
+$ kubectl run nginx --image nginx --dry-run=client -o yaml > pod.yaml
+
+Manifest pod.yaml
+$ cat pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+
+Try to apply on your default namespace
+
+$ kubectl apply -f pod.yaml 
+Error from server: error when creating "pod.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Pod/default/nginx was blocked due to the following policies 
+
+require-resources-limitss:
+  validate-limits: 'validation error: Needs imits definitions for resources. rule
+    validate-limits failed at path /spec/containers/0/resources/limits/'
+
+
+So Policies is working fine as expected
+
+Try now to include resource limits into pod2.yaml
+$ cat pod2.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+    resources:
+      limits:
+        cpu: 1
+        memory: 64Mi
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+
+$ kubectl apply -f pod2.yaml 
+pod/nginx created
+balbertus@HP-ProBook-440-G1:~/PICK/kubernets_uncomplicated/day-14$ kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+nginx   1/1     Running   0          11s
+
+
