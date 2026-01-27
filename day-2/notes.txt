@@ -1,5 +1,5 @@
 pod yaml manifest
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ cat pod.yaml 
+$ cat pod.yaml 
 apiVersion: v1
 kind: Pod
 metadata:
@@ -19,14 +19,12 @@ spec:
   restartPolicy: Always
 
 ##########Getting Containers name at a pod####################################
-#kubectl get pods
-#kubectl describe <pod name>
-
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ kubectl get pods
+$ kubectl get pods
 NAME        READY   STATUS             RESTARTS      AGE
 balbertus   1/2     CrashLoopBackOff   6 (43s ago)   7m3s
 mynginx     1/1     Running            1 (80m ago)   24h
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ kubectl describe pod balbertus
+
+$ kubectl describe pod balbertus
 Name:             balbertus
 Namespace:        default
 Priority:         0
@@ -110,14 +108,18 @@ Events:
 user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$
 
 ##########Getting erros and Logs at pod.yaml file#############################
-#kubectl logs <pod> -c <container>
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ kubectl logs balbertus -c apache
+Sintaxe
+# kubectl logs <pod> -c <container>
+# kubectl logs -n <namespace> <pod> -c <container>
+
+$ kubectl logs balbertus -c apache
 AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 10.244.2.3. Set the 'ServerName' directive globally to suppress this message
 (98)Address already in use: AH00072: make_sock: could not bind to address [::]:80 'essa linha mostra conflito da porta 80 para o apache já em uso pelo nginx'
 (98)Address already in use: AH00072: make_sock: could not bind to address 0.0.0.0:80
 no listening sockets available, shutting down
 AH00015: Unable to open logs
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ kubectl logs balbertus -c nginx
+
+$ kubectl logs balbertus -c nginx
 /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
 /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
 /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
@@ -138,17 +140,19 @@ user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ kubectl lo
 user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ 
 
 ###########see 1/2 instead of 2/2##############################################
- kubectl get pods
+$ kubectl get pods
 NAME        READY   STATUS             RESTARTS       AGE
 balbertus   1/2     CrashLoopBackOff   7 (3m3s ago)   14m
 
 ############runing 2 containers just one webservices###########################
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ kubectl create -f pod.yaml
+$ kubectl create -f pod.yaml
 pod/balbertus created
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ kubectl get pods
+
+$ kubectl get pods
 NAME        READY   STATUS    RESTARTS   AGE
 balbertus   2/2     Running   0          9s
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ kubectl describe pod balbertus
+
+$ kubectl describe pod balbertus
 Name:             balbertus
 Namespace:        default
 Priority:         0
@@ -221,11 +225,10 @@ Events:
   Normal  Pulled     36s   kubelet            Successfully pulled image "busybox" in 4.361s (4.361s including waiting). Image size: 2156518 bytes.
   Normal  Created    36s   kubelet            Created container: busybox
   Normal  Started    36s   kubelet            Started container busybox
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$
-
-#######################################pod limits####################################################################################################
+$
+#######################################podlimits##########################################################################
 Limits on Container inside the pods
-# manifest
+> Yaml Manifest
 apiVersion: v1
 kind: Pod
 metadata:
@@ -270,8 +273,8 @@ status: {}
 
     >> connect into pod/container (exec bash) and instal stress test to validate limits
 
-    #kubectl exec -ti balbertus -- bash
-    #apt-get update && apt-get install stress
+# kubectl exec -ti balbertus -- bash
+# apt-get update && apt-get install stress
 
 root@balbertus:/# stress --vm 1 --vm-bytes 128M --timeout 10s
 stress: info: [175] dispatching hogs: 0 cpu, 0 io, 1 vm, 0 hdd
@@ -287,12 +290,12 @@ DUE CPU LIMITATION
 root@balbertus:/# stress --vm 1 --cpu 1 --timeout 10s
 stress: info: [183] dispatching hogs: 1 cpu, 0 io, 1 vm, 0 hdd
 command terminated with exit code 137
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ 
+$ 
 
 ##################pod persistence############################################
 empty dir concept > do not garantee in case of removal - just for restarting situations
 
-#manifest
+> manifest
 apiVersion: v1
 kind: Pod
 metadata:
@@ -347,7 +350,7 @@ Containers:
       /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-szsvd (ro)
 
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ kubectl exec -ti balbertus -- bash
+$ kubectl exec -ti balbertus -- bash
 root@balbertus:/# ls
 balbertus  bin	boot  dev  docker-entrypoint.d	docker-entrypoint.sh  etc  home  lib  lib64  media  mnt  opt  proc  product_name  product_uuid	root  run  sbin  srv  sys  tmp	usr  var
 root@balbertus:/# ls -la
@@ -378,8 +381,10 @@ dr-xr-xr-x  13 nobody nogroup    0 Jul 16 13:13 sys
 drwxrwxrwt   2 root   root    4096 Jun 30 00:00 tmp
 drwxr-xr-x   1 root   root    4096 Jun 30 00:00 usr
 drwxr-xr-x   1 root   root    4096 Jun 30 00:00 var
+
 root@balbertus:/# ls
 balbertus  bin	boot  dev  docker-entrypoint.d	docker-entrypoint.sh  etc  home  lib  lib64  media  mnt  opt  proc  product_name  product_uuid	root  run  sbin  srv  sys  tmp	usr  var
+
 root@balbertus:/# cd balbertus/
 root@balbertus:/balbertus# pwd
 /balbertus
