@@ -1,3 +1,4 @@
+Day - 4
 ###########REPLICASET##################################
 $ kubectl get deployment
 NAME               READY   UP-TO-DATE   AVAILABLE   AGE
@@ -84,21 +85,21 @@ Events:
   Normal  SuccessfulCreate  63s   replicaset-controller  Created pod: nginx-deployment-575cffbfc6-n7d95
 
 ################################NEW APP VERSION##########################################################
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl get replicaset
+$ kubectl get replicaset
 NAME                          DESIRED   CURRENT   READY   AGE
 nginx-deployment-575cffbfc6   3         3         3       2m32s
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ vim deployment.yaml 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl apply -f deployment.yaml 
+
+$ kubectl apply -f deployment.yaml 
 deployment.apps/nginx-deployment configured
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl get replicaset
+
+$ kubectl get replicaset
 NAME                          DESIRED   CURRENT   READY   AGE
 nginx-deployment-575cffbfc6   3         3         3       2m55s
 nginx-deployment-579d7cd555   1         1         0       3s
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ 
+$ 
 
 >> SEE the TWO replicasets.... differ by nginx app version
-
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl describe replicaset nginx-deployment 
+$ kubectl describe replicaset nginx-deployment 
 Name:           nginx-deployment-575cffbfc6
 Namespace:      default
 Selector:       app=nginx-deployment,pod-template-hash=575cffbfc6
@@ -176,31 +177,26 @@ Events:
   Normal  SuccessfulCreate  2m10s  replicaset-controller  Created pod: nginx-deployment-579d7cd555-tw8vz
   Normal  SuccessfulCreate  117s   replicaset-controller  Created pod: nginx-deployment-579d7cd555-f7xsk
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$
-
 $ kubectl get replicaset
 NAME                          DESIRED   CURRENT   READY   AGE
 nginx-deployment-575cffbfc6   0         0         0       8m39s
 nginx-deployment-579d7cd555   3         3         3       5m47s
 
 ################################DOING A ROLLBACK###########################################################################
-
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl rollout undo deployment nginx-deployment
+$ kubectl rollout undo deployment nginx-deployment
 deployment.apps/nginx-deployment rolled back
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl get replicaset
+$ kubectl get replicaset
 NAME                          DESIRED   CURRENT   READY   AGE
 nginx-deployment-575cffbfc6   2         2         1       9m21s
 nginx-deployment-579d7cd555   2         2         2       6m29s
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl get replicaset
+
+$ kubectl get replicaset
 NAME                          DESIRED   CURRENT   READY   AGE
 nginx-deployment-575cffbfc6   3         3         3       9m23s
 nginx-deployment-579d7cd555   0         0         0       6m31s
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ 
-
+$ 
 >> THIS IS ONE OF THE FUNCTIONS OF REPLICASET
-
 ######################DEAMONSET####################################################################
-
 $ kubectl apply -f node-exporter-daemonset.yaml
 daemonset.apps/node-exporter created
 $ kubectl get daemonset
@@ -208,22 +204,18 @@ NAME            DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECT
 node-exporter   2         2         0       2            0           <none>          4s
 
 >> Checking pods 
-
 $ kubectl get pods -l app=node-exporter
 NAME                  READY   STATUS    RESTARTS   AGE
 node-exporter-rqnch   1/1     Running   0          3m55s
 node-exporter-zpdd8   1/1     Running   0          3m55s
 
 >>> Check in case its on all nodes of the cluster
-
 $ kubectl get pods -o wide -l app=node-exporter
 NAME                  READY   STATUS    RESTARTS   AGE     IP           NODE           NOMINATED NODE   READINESS GATES
 node-exporter-rqnch   1/1     Running   0          9m29s   172.18.0.3   kind-worker    <none>           <none>
 node-exporter-zpdd8   1/1     Running   0          9m29s   172.18.0.2   kind-worker2   <none>           <none>
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$
 
 >> And describe to see all details
-
 $ kubectl describe daemonset node-exporter
 Name:           node-exporter
 Namespace:      default
@@ -264,10 +256,8 @@ Events:
   ----    ------            ----  ----                  -------
   Normal  SuccessfulCreate  11m   daemonset-controller  Created pod: node-exporter-rqnch
   Normal  SuccessfulCreate  11m   daemonset-controller  Created pod: node-exporter-zpdd8
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4
-
 ####################PROBES############################################################
-Manifest
+> Manifest
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -304,17 +294,19 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 3
 
-
 $ kubectl create -f nginx-liveness-tcpSocket.yaml 
 deployment.apps/nginx-liveness-tcp created
+
 $ kubectl get deployment
 NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-liveness-tcp   3/3     3            3           16s
+
 $ kubectl get pods
 NAME                                  READY   STATUS    RESTARTS   AGE
 nginx-liveness-tcp-6b77dbc457-fpvfj   1/1     Running   0          24s
 nginx-liveness-tcp-6b77dbc457-jf4nm   1/1     Running   0          24s
 nginx-liveness-tcp-6b77dbc457-qclwm   1/1     Running   0          24s
+
 $ kubectl describe pods nginx-liveness-tcp-6b77dbc457-fpvfj
 Name:             nginx-liveness-tcp-6b77dbc457-fpvfj
 
@@ -360,8 +352,7 @@ nginx-liveness-tcp-7c8d9767c8-k684m   1/1     Running   4 (42s ago)   3m22s
 nginx-liveness-tcp-7c8d9767c8-rcps6   1/1     Running   4 (38s ago)   3m19s
 
 >>> TRYING WITH httpGet
-
-kubectl get deployment
+$ kubectl get deployment
 NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-liveness-tcp   3/3     3            3           11s
 $ kubectl get pods
@@ -383,7 +374,6 @@ Events:
   Normal  Started    35s   kubelet            Started container nginx
 
 >>>  In case of Failure as a differ endpoint
-
 $ kubectl describe pods nginx-liveness-http-fc5677498-kf9qj
 
     Liveness:     http-get http://:80/balbertus delay=10s timeout=5s period=10s #success=1 #failure=3
@@ -399,11 +389,8 @@ Events:
   Normal   Created    6s (x2 over 46s)  kubelet            Created container: nginx
   Normal   Started    6s (x2 over 46s)  kubelet            Started container nginx
   Normal   Pulled     6s                kubelet            Successfully pulled image "nginx" in 1.406s (2.981s including waiting). Image size: 72223778 bytes.
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$
-
 ######################################################################3
 ReadinessProbe
-
 ...
  readinessProbe: 
           exec:
@@ -417,7 +404,7 @@ ReadinessProbe
           failureThreshold: 3
           successThreshold: 1
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-4$ kubectl get pods
+$ kubectl get pods
 NAME                                   READY   STATUS    RESTARTS   AGE
 nginx-liveness-http-fc5677498-ggjhl    0/1     Pending   0          18s
 nginx-liveness-http-fc5677498-h8dct    0/1     Pending   0          27s
@@ -430,7 +417,6 @@ nginx-readiness-tcp-768d48b85f-h7qrs   0/1     Running   0          3m57s
 nginx-readiness-tcp-768d48b85f-mhtmf   1/1     Running   0          3m57s
 
 See on describe output
-
 .....
     Liveness:     tcp-socket :80 delay=10s timeout=5s period=10s #success=1 #failure=3
     Readiness:    exec [curl f http://localhost:80/] delay=10s timeout=5s period=10s #success=1 #failure=3
