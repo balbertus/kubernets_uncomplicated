@@ -1,5 +1,5 @@
 #################DEPLOYMENTS############################################3
-Manifest
+> Manifest
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,19 +29,19 @@ spec:
 
 >> To apply the Deployment:
 
-#kubectl apply -f deployment.yaml
+# kubectl apply -f deployment.yaml
  
 >> To validate Deployment creation:
 
-#kubectl get deployment -l app=nginx-balbertus
+# kubectl get deployment -l app=nginx-balbertus
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get deployment -l app=nginx-balbertus
+$ kubectl get deployment -l app=nginx-balbertus
 NAME              READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-balbertus   3/3     3            3           51s
 
 >> Getting pod information that was created by Deployment
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get pods -l app=nginx-balbertus
+$ kubectl get pods -l app=nginx-balbertus
 NAME                               READY   STATUS    RESTARTS   AGE
 nginx-balbertus-6f48b9c64d-28f7m   1/1     Running   0          3m50s
 nginx-balbertus-6f48b9c64d-86v2n   1/1     Running   0          3m50s
@@ -49,13 +49,13 @@ nginx-balbertus-6f48b9c64d-xshc8   1/1     Running   0          3m50s
 
 >> ReplicaSet infos
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get replicaset -l app=nginx-balbertus
+$ kubectl get replicaset -l app=nginx-balbertus
 NAME                         DESIRED   CURRENT   READY   AGE
 nginx-balbertus-6f48b9c64d   3         3         3       8m44s
 
 >> Details using Describe output
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl describe deployment -l app=nginx-balbertus
+$ kubectl describe deployment -l app=nginx-balbertus
 Name:                   nginx-balbertus
 Namespace:              default
 CreationTimestamp:      Thu, 17 Jul 2025 15:30:26 -0300
@@ -113,13 +113,14 @@ Pod Template:
 
 >> ADDING NGINX VERSION
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl apply -f deployment.yaml 
+$ kubectl apply -f deployment.yaml 
 
 deployment.apps/nginx-balbertus configured
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl describe deployment -l nginx-balbertus
+$ kubectl describe deployment -l nginx-balbertus
 No resources found in default namespace.
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl describe deployment nginx-balbertus
+
+$ kubectl describe deployment nginx-balbertus
 Name:                   nginx-balbertus
 Namespace:              default
 CreationTimestamp:      Thu, 17 Jul 2025 15:30:26 -0300
@@ -160,10 +161,10 @@ spec:
       maxUnavailable: 2
     type: RollingUpdate
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl apply -f deployment.yaml 
+$ kubectl apply -f deployment.yaml 
 deployment.apps/nginx-balbertus configured
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl describe deployment nginx-balbertus
+$ kubectl describe deployment nginx-balbertus
 Name:                   nginx-balbertus
 Namespace:              default
 CreationTimestamp:      Thu, 17 Jul 2025 15:30:26 -0300
@@ -182,7 +183,7 @@ Pod Template:
 
 >> With kubectl rollout you can follow update strategies and stages.
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl rollout status deployment nginx-balbertus
+$ kubectl rollout status deployment nginx-balbertus
 Waiting for deployment "nginx-balbertus" rollout to finish: 3 out of 5 new replicas have been updated...
 Waiting for deployment "nginx-balbertus" rollout to finish: 3 out of 5 new replicas have been updated...
 Waiting for deployment "nginx-balbertus" rollout to finish: 3 out of 5 new replicas have been updated...
@@ -200,7 +201,7 @@ deployment "nginx-balbertus" successfully rolled out
 
 >> see now 5 Replicas
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get pods 
+$ kubectl get pods 
 NAME                               READY   STATUS    RESTARTS   AGE
 nginx-balbertus-76f7cf59cd-45lv2   1/1     Running   0          7m4s
 nginx-balbertus-76f7cf59cd-7q6bq   1/1     Running   0          7m6s
@@ -213,9 +214,9 @@ nginx-balbertus-76f7cf59cd-q949m   1/1     Running   0          7m25s
       image: docker.io/library/nginx:1.17.0
 
 Or 
-user1@balbertus-virtual-machine:~/PICK$ kubectl exec -ti nginx-balbertus-76f7cf59cd-45lv2 -- nginx -v
+$ kubectl exec -ti nginx-balbertus-76f7cf59cd-45lv2 -- nginx -v
 nginx version: nginx/1.17.0
-user1@balbertus-virtual-machine:~/PICK$
+$
 
 >> MOVE TO RECRIATE strategy
 
@@ -238,9 +239,9 @@ Waiting for deployment "nginx-balbertus" rollout to finish: 3 of 6 updated repli
 Waiting for deployment "nginx-balbertus" rollout to finish: 4 of 6 updated replicas are available...
 Waiting for deployment "nginx-balbertus" rollout to finish: 5 of 6 updated replicas are available...
 deployment "nginx-balbertus" successfully rolled out
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$
+$
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get pods -l app=nginx-balbertus
+$ kubectl get pods -l app=nginx-balbertus
 NAME                               READY   STATUS    RESTARTS   AGE
 nginx-balbertus-678bff7b6c-5qmtf   1/1     Running   0          53s
 nginx-balbertus-678bff7b6c-c46nw   1/1     Running   0          53s
@@ -248,19 +249,20 @@ nginx-balbertus-678bff7b6c-rzkgf   1/1     Running   0          53s
 nginx-balbertus-678bff7b6c-s8zgk   1/1     Running   0          53s
 nginx-balbertus-678bff7b6c-txpjr   1/1     Running   0          53s
 nginx-balbertus-678bff7b6c-vzx6w   1/1     Running   0          53s
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$
+$
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl exec -ti nginx-balbertus-678bff7b6c-5qmtf -- nginx -v
+$ kubectl exec -ti nginx-balbertus-678bff7b6c-5qmtf -- nginx -v
 nginx version: nginx/1.18.0
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$
+$
 
 >> SEE ABOVE NEW VERSION AND 6 REPLICAS APPLIED
 
 >> TO GET BACK PREVIOUS VERSION OF Deployment APP USE kubectl rollout undo
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl rollout undo deployment nginx-balbertus
+$ kubectl rollout undo deployment nginx-balbertus
 deployment.apps/nginx-balbertus rolled back
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get pods -l app=nginx-balbertus
+
+$ kubectl get pods -l app=nginx-balbertus
 NAME                               READY   STATUS    RESTARTS   AGE
 nginx-balbertus-76f7cf59cd-5l7k2   1/1     Running   0          7s
 nginx-balbertus-76f7cf59cd-67fgb   1/1     Running   0          7s
@@ -268,14 +270,12 @@ nginx-balbertus-76f7cf59cd-gbpz4   1/1     Running   0          7s
 nginx-balbertus-76f7cf59cd-hn7bf   1/1     Running   0          8s
 nginx-balbertus-76f7cf59cd-sfmht   1/1     Running   0          7s
 nginx-balbertus-76f7cf59cd-stv2b   1/1     Running   0          7s
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl exec -ti nginx-balbertus-76f7cf59cd-5l7k2 -- nginx -v
+
+$ kubectl exec -ti nginx-balbertus-76f7cf59cd-5l7k2 -- nginx -v
 nginx version: nginx/1.17.0
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$
-
+$
 >> SEE HISTORY OF VERSIONS / revision
-
-
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl rollout history deployment nginx-balbertus
+$ kubectl rollout history deployment nginx-balbertus
 deployment.apps/nginx-balbertus 
 REVISION  CHANGE-CAUSE
 1         <none>
@@ -283,11 +283,8 @@ REVISION  CHANGE-CAUSE
 4         <none>
 5         <none>
 
-
-
 >> COMPARE REVISION 4 and 5 APP NGINX VERSION BEFORE AND AFTER ROLLBACK
-
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl rollout history deployment nginx-balbertus --revision=4
+$ kubectl rollout history deployment nginx-balbertus --revision=4
 deployment.apps/nginx-balbertus with revision #4
 Pod Template:
   Labels:       app=nginx-balbertus
@@ -309,7 +306,7 @@ Pod Template:
   Node-Selectors:       <none>
   Tolerations:  <none>
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl rollout history deployment nginx-balbertus --revision=5
+$ kubectl rollout history deployment nginx-balbertus --revision=5
 deployment.apps/nginx-balbertus with revision #5
 Pod Template:
   Labels:       app=nginx-balbertus
@@ -330,53 +327,45 @@ Pod Template:
   Volumes:      <none>
   Node-Selectors:       <none>
   Tolerations:  <none>
-
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$
-
+$
 >> ALSO WE HAVE 
-
-kubectl rollout pause 
-
-TO STOP AND BLOCK ANY UPDATE
-
-AND 
-
-kubectl rollout resume
-
-TO "PERMIT" AGAIN START UPDATE.
-
+$ kubectl rollout pause 'TO STOP AND BLOCK ANY UPDATE AND' 
+$ kubectl rollout resume
+'TO "PERMIT" AGAIN START UPDATE'.
 
 >> FINALY WE CAN REMOVE THIS DEPLOYMENT WITH TWO WAYS
 
 by Manifest and direct as BELLOW
 
-#kubectl delete deployment nginx-balbertus
+$ kubectl delete deployment nginx-balbertus
+$ kubectl delete -f deployment.yaml
 
-#kubectl delete -f deployment.yaml
-
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get deployment
+$ kubectl get deployment
 NAME              READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-balbertus   6/6     6            6           83m
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl delete deployment nginx-balbertus
-deployment.apps "nginx-balbertus" deleted
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get deployment
-No resources found in default namespace.
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ 
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl apply -f deployment.yaml 
+$ kubectl delete deployment nginx-balbertus
+deployment.apps "nginx-balbertus" deleted
+
+$ kubectl get deployment
+No resources found in default namespace.
+$ 
+$ kubectl apply -f deployment.yaml 
 deployment.apps/nginx-balbertus created
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get deployment
+
+$ kubectl get deployment
 NAME              READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-balbertus   2/6     6            2           4s
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl delete -f deployment.yaml 
+
+$ kubectl delete -f deployment.yaml 
 deployment.apps "nginx-balbertus" deleted
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get deployment
+
+$ kubectl get deployment
 No resources found in default namespace.
 user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$
 
 >> ABOUT Namespace
-
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get namespaces
+$ kubectl get namespaces
 NAME                 STATUS   AGE
 default              Active   3d1h
 kube-node-lease      Active   3d1h
@@ -384,10 +373,10 @@ kube-public          Active   3d1h
 kube-system          Active   3d1h
 local-path-storage   Active   3d1h
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl create namespace balbertus
+$ kubectl create namespace balbertus
 namespace/balbertus created
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get namespaces
+$ kubectl get namespaces
 NAME                 STATUS   AGE
 balbertus            Active   2s
 default              Active   3d1h
@@ -396,12 +385,12 @@ kube-public          Active   3d1h
 kube-system          Active   3d1h
 local-path-storage   Active   3d1h
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl apply -f deployment.yaml -n balbertus
+$ kubectl apply -f deployment.yaml -n balbertus
 deployment.apps/nginx-balbertus created
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get deployments
+$ kubectl get deployments
 No resources found in default namespace.
 
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$ kubectl get deployments -n balbertus
+$ kubectl get deployments -n balbertus
 NAME              READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-balbertus   6/6     6            6           23s
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$
+$
