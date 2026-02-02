@@ -1,96 +1,87 @@
-This is based on LinuxTips - Descomplicando o Kubernetes
+# Subject
+## This is based on the LinuxTips course called - Descomplicando o Kubernetes by Jefferson
 
-I'm learning about Docker and Kubernetes so this is the second big module of PICK - 'Programa Intensivo de Containers e Kubernetes' in portuguese.
-
-So you also can take a look at my another repository dedicated to Containers (Docker) - docker_uncomplicated also based on LinuxTips PICK.
-
+Well I'm learning about Docker and Kubernetes this is the second big module of PICK - 'Programa Intensivo de Containers e Kubernetes' that I made in portuguese. This is a trascription to English with my point of view and learning journey. You also can take a look at my another repository dedicated to Containers (Docker) - 
+docker_uncomplicated also based on LinuxTips PICK.
 I tried to follow all contents and follow by days and create my personal notes to study and remmember all topics with command line outputs and example. 
-
-######################################################################################
-
 The objectve here is learning with pratical labs and demonstrations to prove knowledge and adquire skills.
 
-
 ######################################################################################################
-DAY 5 - Instalar um Cluster Kubernetes com 3 nodes.
+>  Install a K8s Cluster with 3 nodes.
+I've been working with KIND that is a good one to start a simulated and local environment with few resources and in your local machine.
+This is the path and documentation:
 
-We are going to start with kubeadm by instances created on the cloud as AWS/GCP/Azure or where you want.
+	- https://kind.sigs.k8s.io/
 
-Install a cluster with kubeadm!
+Also you can use a Cloud environment with kubeadm by instances created on the cloud as AWS/GCP/Azure or where you want.
 
-1. Create 3 instances at AWS, GCP or Azure (it's about your cloud environment, I am not going to show here)
-	a. At least VMs medium type.
-	b. 2 vCPU and 4GB mem
-
-2. Release Firewall rules as bellow
+>  Install a cluster with kubeadm!
+	1. Create 3 instances at AWS, GCP or Azure (it's about your cloud environment, I am not going to show here)
+		a. At least VMs medium type.
+		b. 2 vCPU and 4GB mem
+	2. Release Firewall rules as bellow
 	Control Plane TCP 6443
 	All Nodes     TCP 10250-10255
 	WeaveNet      TCP 6783 and 6784
       		      UDP 6783
+	3. Intall all updates... (I'm working within Ubuntu)
+		$ sudo apt-get update
+		and configure some parameters as:
+		$ swapoff -a
+		- check in case /etc/fstab
+		- create some modules to K8s cluister config
+		$ /etc/modules-load.d/k8s.conf
+		overlay
+		br_netfilter
+		- load (without reboot)
+		$ sudo modprobe overlay
+		$ sudo modprobe br_netfilter
+		- prepare some Kernel parameters
+		$ /etc/sysctl.d/k8s.conf
+		net.bridge.bridge-nf-call-iptables = 1
+		net.bridge.bridge-nf-call-ip6tables = 1
+		net.ipv4.ip_forward = 1
+		$ sudo sysctl --system
+		- Install transport https and curl
+		$ apt-get install apt-transport-https
 
-3. Intall all updates... (I'm working within Ubuntu)
-#sudo apt-get update
-
-and configure some parameters as:
-# swapoff -a
-- check in case /etc/fstab
-
-- create some modules to K8s cluister config
-# /etc/modules-load.d/k8s.conf
-overlay
-br_netfilter
-- load (without reboot)
-sudo modprobe overlay
-sudo modprobe br_netfilter
-
-- prepare some Kernel parameters
-#/etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-iptables = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-net.ipv4.ip_forward = 1
-#sudo sysctl --system
-
-- Install transport https and curl
-#apt-get install apt-transport-https
-
-Now go to add Kubeadm repository.
-
-https://v1-33.docs.kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+> Now go to add Kubeadm repository.
+	- https://v1-33.docs.kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
 
 After kubeadm installation as result bellow:
-#kubelet set on hold
-#kubeadm set on hold
-#kubectl set on hold
+$ kubelet set on hold
+$ kubeadm set on hold
+$ kubectl set on hold
 
 <img width="1437" height="190" alt="image" src="https://github.com/user-attachments/assets/4c3e208d-0e1f-43ee-8462-50467e72315a" />
 
-Check in case Container runtime is installed. (containerd)
+Check in case Container runtime is installed. (containerd). If not follow instructions bellow
 
-if not follow instructions bellow
-
-#sudo apt-get install gnupg lsb-release ca-certificates
+$ sudo apt-get install gnupg lsb-release ca-certificates
 
 Set up Docker's apt repository
 
-#sudo apt-get install ca-certificates curl
-#sudo install -m 0755 -d /etc/apt/keyrings
-#sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-#sudo chmod a+r /etc/apt/keyrings/docker.asc
+$ sudo apt-get install ca-certificates curl
 
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+$ sudo install -m 0755 -d /etc/apt/keyrings
 
-#sudo apt-get update
+$ sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 
-Finaly get installed Containerd
+$ sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-#sudo apt-get install containerd.io
+	- echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo /n  "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+$ sudo apt-get update
+
+> Finaly get installed Containerd
+
+$ sudo apt-get install containerd.io
 
 Copy containerd config default to /etc/containerd/config.toml it is necessary to change system cgroup from FALSE to TRUE.
 
-#sudo containerd config default |sudo tee /etc/containerd/config.toml
+$ sudo containerd config default |sudo tee /etc/containerd/config.toml
 
-#sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+$ sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 
 This parameter bellow needs to be true.
 systemd_cgroup = true
@@ -98,9 +89,9 @@ restart containerd
 
 For now Do it only on Control Plane Machine!
 
-Enabling  Kubeclt to Start our cluster
+> Enabling  Kubeclt to Start our cluster
 
-#sudo kubeadm init --pod-network-cidr=<YOUR IP> --apiserver-advertise-address=<IP to talk with nodes>
+$ sudo kubeadm init --pod-network-cidr=<YOUR IP> --apiserver-advertise-address=<IP to talk with nodes>
 
 Follow instructions bellow:
 
@@ -114,7 +105,7 @@ To start using your cluster, you need to run the following as a regular user:
 
 Add other nodes to the cluster...
 
-#kubeadmin join <ip:port> --token <m5ltk...> --discovery-token-ca-cert-hash <sha...>
+$ kubeadmin join <ip:port> --token <m5ltk...> --discovery-token-ca-cert-hash <sha...>
 
 get command line started in kubeadm join <your ip>
 
@@ -126,7 +117,7 @@ Install CNI - network plugin
 
 After that just play with one deployment
 
-#kubeectl create deployment nginx --image nginx --replicas 3
+$ kubeectl create deployment nginx --image nginx --replicas 3
 
 <img width="797" height="165" alt="image" src="https://github.com/user-attachments/assets/9708d4f1-5407-4cfe-8175-0c6ff5707d76" />
 
