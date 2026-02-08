@@ -1,4 +1,6 @@
-pod yaml manifest
+Day 2 - Working with Pods
+
+>>pod yaml manifest<<
 $ cat pod.yaml 
 apiVersion: v1
 kind: Pod
@@ -18,7 +20,7 @@ spec:
   dnsPolicy: ClusterFirst
   restartPolicy: Always
 
-##########Getting Containers name at a pod####################################
+>>Getting Containers name at a pod<<
 $ kubectl get pods
 NAME        READY   STATUS             RESTARTS      AGE
 balbertus   1/2     CrashLoopBackOff   6 (43s ago)   7m3s
@@ -105,9 +107,8 @@ Events:
   Normal   Pulled     5m13s                  kubelet            Successfully pulled image "httpd" in 1.471s (1.471s including waiting). Image size: 58526745 bytes.
   Warning  BackOff    83s (x26 over 6m47s)   kubelet            Back-off restarting failed container apache in pod balbertus_default(67ee3db3-90c9-4df2-8d14-fc2ac788e28a)
   Normal   Pulling    61s (x7 over 7m)       kubelet            Pulling image "httpd"
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$
 
-##########Getting erros and Logs at pod.yaml file#############################
+>>Getting erros and Logs at pod.yaml file<<
 Sintaxe
 # kubectl logs <pod> -c <container>
 # kubectl logs -n <namespace> <pod> -c <container>
@@ -137,14 +138,13 @@ $ kubectl logs balbertus -c nginx
 2025/07/15 18:50:02 [notice] 1#1: start worker processes
 2025/07/15 18:50:02 [notice] 1#1: start worker process 35
 2025/07/15 18:50:02 [notice] 1#1: start worker process 36
-user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-2$ 
 
-###########see 1/2 instead of 2/2##############################################
+>>see 1/2 instead of 2/2<<
 $ kubectl get pods
 NAME        READY   STATUS             RESTARTS       AGE
 balbertus   1/2     CrashLoopBackOff   7 (3m3s ago)   14m
 
-############runing 2 containers just one webservices###########################
+>>runing 2 containers just one webservices<<
 $ kubectl create -f pod.yaml
 pod/balbertus created
 
@@ -225,10 +225,10 @@ Events:
   Normal  Pulled     36s   kubelet            Successfully pulled image "busybox" in 4.361s (4.361s including waiting). Image size: 2156518 bytes.
   Normal  Created    36s   kubelet            Created container: busybox
   Normal  Started    36s   kubelet            Started container busybox
-$
-#######################################podlimits##########################################################################
-Limits on Container inside the pods
-> Yaml Manifest
+
+>>podlimits<<
+
+Limits on Container inside the pods, Yaml Manifest
 apiVersion: v1
 kind: Pod
 metadata:
@@ -254,7 +254,7 @@ spec:
   restartPolicy: Always
 status: {}
 
->> pod describe output
+>> pod describe output <<
 
    Args:
       sleep
@@ -271,8 +271,7 @@ status: {}
       memory:     64Mi
     Environment:  <none>
 
-    >> connect into pod/container (exec bash) and instal stress test to validate limits
-
+>> connect into pod/container (exec bash) and instal stress test to validate limits <<
 # kubectl exec -ti balbertus -- bash
 # apt-get update && apt-get install stress
 
@@ -292,7 +291,7 @@ stress: info: [183] dispatching hogs: 1 cpu, 0 io, 1 vm, 0 hdd
 command terminated with exit code 137
 $ 
 
-##################pod persistence############################################
+>> pod persistence << 
 empty dir concept > do not garantee in case of removal - just for restarting situations
 
 > manifest
