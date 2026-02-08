@@ -1,4 +1,4 @@
-day-9 - Observability
+Day-9 - Observability
 
 Kube-Prometheus is a project created based on Prometheus Operator that permit to monitor a Kubernetes Cluster.
 
