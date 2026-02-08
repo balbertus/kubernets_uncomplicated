@@ -1,4 +1,4 @@
-Day - 1 ! Install Kubectl and Kind to Starting play with Clusters
+# Day - 1 ! Install Kubectl and Kind to Starting play with Clusters
 
 Follow Documentation page https://kubernetes.io/docs/tasks/tools/ .I'm using Linux but We can run on Mac and Windows as well
 
@@ -54,7 +54,7 @@ kube-proxy-bvvhs                             1/1     Running   0          4m5s  
 kube-proxy-vpwlt                             1/1     Running   0          4m13s   172.18.0.3   kind-control-plane   <none>           <none>
 kube-scheduler-kind-control-plane            1/1     Running   0          4m19s   172.18.0.3   kind-control-plane   <none>           <none>
 
-###get ignoring namespace - get by resources###
+>>get ignoring namespace - get by resources<<
 
 $ kubectl get pods -A
 NAMESPACE            NAME                                         READY   STATUS    RESTARTS   AGE
@@ -87,7 +87,7 @@ kube-system          coredns-674b8bbfcf                  2         2         2  
 local-path-storage   local-path-provisioner-7dc846544d   1         1         1       8m28s
 user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-1
 
-###CREATE A YAML FILE###
+>>CREATE A YAML FILE<<
 $ kubectl run --image nginx --port 80 mynginx --dry-run=client -o yaml > pod.yaml
 
 $ ls -la
@@ -117,7 +117,7 @@ spec:
   restartPolicy: Always
 status: {}
 
-################################APPLY by YAML file#########################################################################
+>>APPLY by YAML file<<
 $ kubectl apply -f pod.yaml 
 pod/mynginx created
 $ kubectl get pods
