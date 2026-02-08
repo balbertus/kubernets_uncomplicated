@@ -1,4 +1,5 @@
-#################DEPLOYMENTS############################################3
+Day 3 - DEPLOYMENTS
+
 > Manifest
 apiVersion: apps/v1
 kind: Deployment
@@ -27,19 +28,17 @@ spec:
             cpu: "0.3"
             memory: "64Mi"
 
->> To apply the Deployment:
+>> To apply the Deployment <<
 
-# kubectl apply -f deployment.yaml
+$ kubectl apply -f deployment.yaml
  
->> To validate Deployment creation:
-
-# kubectl get deployment -l app=nginx-balbertus
+>> To validate Deployment creation <<
 
 $ kubectl get deployment -l app=nginx-balbertus
 NAME              READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-balbertus   3/3     3            3           51s
 
->> Getting pod information that was created by Deployment
+>> Getting pod information that was created by Deployment <<
 
 $ kubectl get pods -l app=nginx-balbertus
 NAME                               READY   STATUS    RESTARTS   AGE
@@ -47,13 +46,13 @@ nginx-balbertus-6f48b9c64d-28f7m   1/1     Running   0          3m50s
 nginx-balbertus-6f48b9c64d-86v2n   1/1     Running   0          3m50s
 nginx-balbertus-6f48b9c64d-xshc8   1/1     Running   0          3m50s
 
->> ReplicaSet infos
+>> ReplicaSet infos <<
 
 $ kubectl get replicaset -l app=nginx-balbertus
 NAME                         DESIRED   CURRENT   READY   AGE
 nginx-balbertus-6f48b9c64d   3         3         3       8m44s
 
->> Details using Describe output
+>> Details using Describe output <<
 
 $ kubectl describe deployment -l app=nginx-balbertus
 Name:                   nginx-balbertus
@@ -111,10 +110,9 @@ Pod Template:
     Image:      nginx
     Port:       <none>
 
->> ADDING NGINX VERSION
+>> ADDING NGINX VERSION <<
 
 $ kubectl apply -f deployment.yaml 
-
 deployment.apps/nginx-balbertus configured
 
 $ kubectl describe deployment -l nginx-balbertus
@@ -138,14 +136,14 @@ Pod Template:
     Image:      nginx:1.16.0
     Port:       <none>
 
->> We have 2 strategies for Deployment:
+>> We have 2 strategies for Deployment <<
 
 RollingUpdate
 Recreate
 
 By Default RollingUpdate with one pod or a group of pods at a time.
 
->> Changing this strategies:
+>> Changing this strategies <<
 
 Manifest changes
 
@@ -181,7 +179,7 @@ Pod Template:
    nginx:
     Image:      nginx:1.17.0
 
->> With kubectl rollout you can follow update strategies and stages.
+>> With kubectl rollout you can follow update strategies and stages <<
 
 $ kubectl rollout status deployment nginx-balbertus
 Waiting for deployment "nginx-balbertus" rollout to finish: 3 out of 5 new replicas have been updated...
@@ -199,7 +197,7 @@ Waiting for deployment "nginx-balbertus" rollout to finish: 3 of 5 updated repli
 Waiting for deployment "nginx-balbertus" rollout to finish: 4 of 5 updated replicas are available...
 deployment "nginx-balbertus" successfully rolled out
 
->> see now 5 Replicas
+>> see now 5 Replicas <<
 
 $ kubectl get pods 
 NAME                               READY   STATUS    RESTARTS   AGE
@@ -209,7 +207,7 @@ nginx-balbertus-76f7cf59cd-cq8kp   1/1     Running   0          7m25s
 nginx-balbertus-76f7cf59cd-nbqmm   1/1     Running   0          7m25s
 nginx-balbertus-76f7cf59cd-q949m   1/1     Running   0          7m25s
 
-# kubectl get pods -l app=nginx-balbertus -o yaml
+$ kubectl get pods -l app=nginx-balbertus -o yaml
 
       image: docker.io/library/nginx:1.17.0
 
@@ -218,7 +216,7 @@ $ kubectl exec -ti nginx-balbertus-76f7cf59cd-45lv2 -- nginx -v
 nginx version: nginx/1.17.0
 $
 
->> MOVE TO RECRIATE strategy
+>> MOVE TO RECRIATE strategy <<
 
 spec:
   replicas: 6
@@ -229,7 +227,7 @@ spec:
     type: Recreate
   template:
 
->> kubectl apply -f deployment.yaml
+$ kubectl apply -f deployment.yaml 
 
 $ kubectl rollout status deployment nginx-balbertus
 Waiting for deployment "nginx-balbertus" rollout to finish: 0 of 6 updated replicas are available...
@@ -255,9 +253,9 @@ $ kubectl exec -ti nginx-balbertus-678bff7b6c-5qmtf -- nginx -v
 nginx version: nginx/1.18.0
 $
 
->> SEE ABOVE NEW VERSION AND 6 REPLICAS APPLIED
+>> SEE ABOVE NEW VERSION AND 6 REPLICAS APPLIED <<
 
->> TO GET BACK PREVIOUS VERSION OF Deployment APP USE kubectl rollout undo
+>> TO GET BACK PREVIOUS VERSION OF Deployment APP USE kubectl rollout undo <<
 
 $ kubectl rollout undo deployment nginx-balbertus
 deployment.apps/nginx-balbertus rolled back
@@ -283,7 +281,7 @@ REVISION  CHANGE-CAUSE
 4         <none>
 5         <none>
 
->> COMPARE REVISION 4 and 5 APP NGINX VERSION BEFORE AND AFTER ROLLBACK
+>> COMPARE REVISION 4 and 5 APP NGINX VERSION BEFORE AND AFTER ROLLBACK <<
 $ kubectl rollout history deployment nginx-balbertus --revision=4
 deployment.apps/nginx-balbertus with revision #4
 Pod Template:
@@ -328,7 +326,7 @@ Pod Template:
   Node-Selectors:       <none>
   Tolerations:  <none>
 $
->> ALSO WE HAVE 
+>> ALSO WE HAVE <<
 $ kubectl rollout pause 'TO STOP AND BLOCK ANY UPDATE AND' 
 $ kubectl rollout resume
 'TO "PERMIT" AGAIN START UPDATE'.
@@ -364,7 +362,7 @@ $ kubectl get deployment
 No resources found in default namespace.
 user1@balbertus-virtual-machine:~/PICK/kubernets_uncomplicated/day-3$
 
->> ABOUT Namespace
+>> ABOUT Namespace <<
 $ kubectl get namespaces
 NAME                 STATUS   AGE
 default              Active   3d1h
