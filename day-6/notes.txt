@@ -1,0 +1,79 @@
+Day-6 - Storage Class
+
+Storage Class is a object that descruve and determine storages available for clusters. Persistent Volumes (PVs) and Persistent Volumes Claims (PVCs).
+
+See all storages classes available in your cluster...
+
+#kubectl get storageclass
+
+$ kubectl get storageclass NAME PROVISIONER RECLAIMPOLICY VOLUMEBINDINGMODE ALLOWVOLUMEEXPANSION AGE balbertus-local kubernetes.io/no-provisioner Retain WaitForFirstConsumer false 6d6h standard (default) rancher.io/local-path Delete WaitForFirstConsumer false 6d7h
+
+rancher.io/local-path, is a default provisioner provided by Kind.
+
+You can create a new Storage Class to create a Persitent Volume on host directory - kind kubernetes.io/host-path.
+
+Manifest: $ cat pv.yaml apiVersion: storage.k8s.io/v1 kind: StorageClass metadata: name: balbertus-2 provisioner: kubernetes.io/no-provisioner reclaimPolicy: Retain volumeBindingMode: WaitForFirstConsumer
+
+$ kubectl apply -f pv.yaml storageclass.storage.k8s.io/balbertus-2 created balbertus@HP-ProBook-440-G1:/PICK/kubernets_uncomplicated/day-6$ kubectl get storageclass NAME PROVISIONER RECLAIMPOLICY VOLUMEBINDINGMODE ALLOWVOLUMEEXPANSION AGE balbertus-2 kubernetes.io/no-provisioner Retain WaitForFirstConsumer false 20s standard (default) rancher.io/local-path Delete WaitForFirstConsumer false 6d7h balbertus@HP-ProBook-440-G1:/PICK/kubernets_uncomplicated/day-6$
+
+Use describe to see all details of this new Storage Class
+
+$ kubectl describe storageclass balbertus-2 Name: balbertus-2 IsDefaultClass: No Annotations: kubectl.kubernetes.io/last-applied-configuration={"apiVersion":"storage.k8s.io/v1","kind":"StorageClass","metadata":{"annotations":{},"name":"balbertus-2"},"provisioner":"kubernetes.io/no-provisioner","reclaimPolicy":"Retain","volumeBindingMode":"WaitForFirstConsumer"}
+
+Provisioner: kubernetes.io/no-provisioner Parameters: AllowVolumeExpansion: MountOptions: ReclaimPolicy: Retain VolumeBindingMode: WaitForFirstConsumer Events:
+
+                PV<<<<<
+
+Persiste Volume (PV) is a resource to physical storage into a cluster. That would be local or remote.
+
+Local: HostPath
+
+Remote: (Network) NFS iSCSI Cloud Providers
+
+See in case your PV
+
+#kubectl get pv -A
+
+$ kubectl get pv -A No resources found
+
+Go ahead to create your PV
+
+Manifest: pv.yaml $ cat pv.yaml apiVersion: v1 kind: PersistentVolume metadata: name: balbertus-pv labels: type: local spec: capacity: storage: 1Gi accessModes: - ReadWriteOnce persistentVolumeReclaimPolicy: Retain hostPath: path: "/mnt/data" storageClassName: balbertus-2
+
+#kubectl apply -f pv.yaml
+
+$ kubectl get pv NAME CAPACITY ACCESS MODES RECLAIM POLICY STATUS CLAIM STORAGECLASS VOLUMEATTRIBUTESCLASS REASON AGE balbertus-pv 1Gi RWO Retain Available balbertus-2 15s
+
+                    PVC <<<<<< First its import to mention Storage Class NFS Manifest $ cat storageclass-nfs.yaml apiVersion: storage.k8s.io/v1 kind: StorageClass metadata: name: nfs provisioner: kubernetes.io/no-provisioner reclaimPolicy: Retain volumeBindingMode: WaitForFirstConsumer parameters: archiveOnDelete: "false"
+
+Output $ kubectl apply -f storageclass-nfs.yaml storageclass.storage.k8s.io/nfs created $ kubectl get storageclass NAME PROVISIONER RECLAIMPOLICY VOLUMEBINDINGMODE ALLOWVOLUMEEXPANSION AGE balbertus-2 kubernetes.io/no-provisioner Retain WaitForFirstConsumer false 22h nfs kubernetes.io/no-provisioner Retain WaitForFirstConsumer false 11s standard (default) rancher.io/local-path Delete WaitForFirstConsumer false 7d6h
+
+Right now We can create a PV over NFS...
+
+                    Manifest $ cat pv-nfs.yaml apiVersion: v1 kind: PersistentVolume metadata: name: balbertus-pv-nfs labels: type: nfs spec: capacity: storage: 1Gi accessModes: - ReadWriteOnce persistentVolumeReclaimPolicy: Retain nfs: server: 192.168.0.18 #YOUR NFS SERVER path: "/mnt/data" storageClassName: nfs
+
+                    OUTPUT kubectl get pv NAME CAPACITY ACCESS MODES RECLAIM POLICY STATUS CLAIM STORAGECLASS VOLUMEATTRIBUTESCLASS REASON AGE balbertus-pv 1Gi RWO Retain Available balbertus-2 21h balbertus-pv-nfs 1Gi RWO Retain Available nfs 14s
+
+                                        PVC<<<<<<<<<< Persistent Volume Claim: That is associate to Storage Class or Persistent Volume.
+
+                                    Manifest $ cat pvc.yaml apiVersion: v1 kind: PersistentVolumeClaim metadata: name: balbertus-pvc spec: accessModes: - ReadWriteOnce resources: requests: storage: 1Gi storageClassName: nfs selector: matchLabels: storage: nfs
+
+                        Output kubectl get pvc NAME STATUS VOLUME CAPACITY ACCESS MODES STORAGECLASS VOLUMEATTRIBUTESCLASS AGE balbertus-pvc Pending nfs 14s
+
+Describe to complete view $ kubectl describe pvc Name: balbertus-pvc Namespace: default StorageClass: nfs Status: Pending Volume:
+Labels: Annotations: Finalizers: [kubernetes.io/pvc-protection] Capacity:
+Access Modes:
+VolumeMode: Filesystem Used By: Events: Type Reason Age From Message
+
+Normal WaitForFirstConsumer 8s (x3 over 28s) persistentvolume-controller waiting for first consumer to be created before binding
+
+Its PENDING because pvc is waiting for first pod creation.
+
+POD manifest $ cat pod.yaml apiVersion: v1 kind: Pod metadata: name: nginx-pod spec: containers:
+
+    name: nginx image: nginx:latest ports:
+        containerPort: 80 volumeMounts:
+        name: balbertus-pvc mountPath: /usr/share/nginx/html volumes:
+    name: balbertus-pvc persistentVolumeClaim: claimName: balbertus-pvc
+
+new output
