@@ -5,8 +5,7 @@ Well I'm learning about Docker and Kubernetes this is the second big module of P
 docker_uncomplicated also based on LinuxTips PICK.
 I tried to follow all contents and follow by days and create my personal notes to study and remmember all topics with command line outputs and example. 
 The objectve here is learning with pratical labs and demonstrations to prove knowledge and adquire skills.
-
-######################################################################################################
+##
 >  Install a K8s Cluster with 3 nodes.
 I've been working with KIND that is a good one to start a simulated and local environment with few resources and in your local machine.
 This is the path and documentation:
@@ -125,244 +124,31 @@ $ kubeectl create deployment nginx --image nginx --replicas 3
 
 ## Summary
 
-- Day 1
-- Day 2
-- Day 3
-- Day 4
-- Day 5
-- Day 6
-- Day 7
-- Day 8
-- Day 9
-- Day 10
-- Day 11
-- Day 12
-- Day 13
-- Day 14
-- Day 15
-- Day 16
-- Day 17
-- Day 19
-- Day 20
-  
+- Day 1: Recap about Container, Container Engine, Container RunTime, OCI and What is Kuberbernetes
+  		 Workers and Control Plane, Pods, ReplicaSet, Deployments and Services.
+         How to install Kubectl. Using Kind to simulate and run your environment.
+- Day 2: What is a Pod, kubectl attach adn kubectl exec, Pod with more than one container, limit your resourceas CPU and Memory,
+  		 Configure a volume if EmptyDir.
+- Day 3: What is a Deployment, Rollback and Rollout.
+- Day 4: What is ReplicaSet, DeamonSet, Probes (Liveness, Readness and Startup).
+- Day 5: What is Cluster Kubernetes, node configuration, containerID, ports. How to add others nodes and CNI.
+- Day 6: Volumes, StorageClass Persistent Volume (PV), Persistent Volume Claim (PVC).
+- Day 7: StatefulSet, Services (ClusterIP and NodePort), (LoadBalancer and ExternalName).
+- Day 8: Secrets and ConfigMaps.
+- Day 9: Kube-Promethersand Promethes Operator, EKSCTL and AWS CLI, Grafana, AlertManager and ServiceMonitor.
+- Day 10: ServiceMonitor - Observability.
+- Day 11: What is Ingress in Kubernetes.
+- Day 12: What is Cert-Manager, Labels, Annotations and more.
+- Day 13: Horizontal Pod Autoscaler (HPA).
+- Day 14: Kyverno
+- Day 15: Taints, Tolerations, Labels, Affinity and Anti Affinity.
+- Day 16: EKS and EKSCTL, Nginx Ingress, NetPol, Network Ploicy and more.
+- Day 17: RBAC, Role, RoleBinding, ClusterRole.
+- Day 18: What is HELM.
+
+# Introduction to GitOps and ArgoCD
 
 
-########################################################################################################################################
-Day-6 - Storage Class
-
-Storage Class is a object that descruve and determine storages available for clusters. Persistent Volumes (PVs) and Persistent Volumes Claims (PVCs).
-
-See all storages classes available in your cluster...
-
-#kubectl get storageclass
-
-$  kubectl get storageclass
-NAME                 PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-balbertus-local      kubernetes.io/no-provisioner   Retain          WaitForFirstConsumer   false                  6d6h
-standard (default)   rancher.io/local-path          Delete          WaitForFirstConsumer   false                  6d7h
-
-rancher.io/local-path, is a default provisioner provided by Kind.
-
-
-You can create a new Storage Class to create a Persitent Volume on host directory - kind kubernetes.io/host-path.
-
-Manifest:
-$ cat pv.yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name:  balbertus-2
-provisioner: kubernetes.io/no-provisioner
-reclaimPolicy: Retain
-volumeBindingMode: WaitForFirstConsumer
-
-
-$ kubectl apply -f pv.yaml 
-storageclass.storage.k8s.io/balbertus-2 created
-balbertus@HP-ProBook-440-G1:~/PICK/kubernets_uncomplicated/day-6$ kubectl get storageclass
-NAME                 PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-balbertus-2          kubernetes.io/no-provisioner   Retain          WaitForFirstConsumer   false                  20s
-standard (default)   rancher.io/local-path          Delete          WaitForFirstConsumer   false                  6d7h
-balbertus@HP-ProBook-440-G1:~/PICK/kubernets_uncomplicated/day-6$
-
-Use describe to see all details of this new Storage Class
-
-$ kubectl describe storageclass balbertus-2
-Name:            balbertus-2
-IsDefaultClass:  No
-Annotations:     kubectl.kubernetes.io/last-applied-configuration={"apiVersion":"storage.k8s.io/v1","kind":"StorageClass","metadata":{"annotations":{},"name":"balbertus-2"},"provisioner":"kubernetes.io/no-provisioner","reclaimPolicy":"Retain","volumeBindingMode":"WaitForFirstConsumer"}
-
-Provisioner:           kubernetes.io/no-provisioner
-Parameters:            <none>
-AllowVolumeExpansion:  <unset>
-MountOptions:          <none>
-ReclaimPolicy:         Retain
-VolumeBindingMode:     WaitForFirstConsumer
-Events:                <none>
-
->>>>PV<<<<<
-
-Persiste Volume (PV) is a resource to physical storage into a cluster. That would be local or remote.
-
-Local:
-HostPath
-
-Remote: (Network)
-NFS
-iSCSI
-Cloud Providers
-
-See in case your PV
-
-#kubectl get pv -A
-
-$ kubectl get pv -A
-No resources found
-
-Go ahead to create your PV
-
-Manifest:
-pv.yaml
-$ cat pv.yaml 
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name:  balbertus-pv
-  labels: 
-    type: local
-spec: 
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  hostPath:
-    path: "/mnt/data"
-  storageClassName: balbertus-2
-
-
-#kubectl apply -f pv.yaml
-
-$ kubectl get pv
-NAME           CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
-balbertus-pv   1Gi        RWO            Retain           Available           balbertus-2    <unset>                          15s
-
->>>>> PVC <<<<<<
-First its import to mention Storage Class NFS
->>>>> Manifest
-$ cat storageclass-nfs.yaml 
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: nfs
-provisioner: kubernetes.io/no-provisioner
-reclaimPolicy: Retain
-volumeBindingMode: WaitForFirstConsumer
-parameters:
-  archiveOnDelete: "false" 
-
-Output
-$ kubectl apply -f storageclass-nfs.yaml 
-storageclass.storage.k8s.io/nfs created
-$ kubectl get storageclass
-NAME                 PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-balbertus-2          kubernetes.io/no-provisioner   Retain          WaitForFirstConsumer   false                  22h
-nfs                  kubernetes.io/no-provisioner   Retain          WaitForFirstConsumer   false                  11s
-standard (default)   rancher.io/local-path          Delete          WaitForFirstConsumer   false                  7d6h
-
-Right now We can create a PV over NFS...
->>>>>Manifest
-$ cat pv-nfs.yaml 
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name:  balbertus-pv-nfs
-  labels: 
-    type: nfs
-spec: 
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  nfs:
-    server: 192.168.0.18 #YOUR NFS SERVER
-    path: "/mnt/data"
-  storageClassName: nfs
->>>>>
->>>>>OUTPUT
- kubectl get pv
-NAME               CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
-balbertus-pv       1Gi        RWO            Retain           Available           balbertus-2    <unset>                          21h
-balbertus-pv-nfs   1Gi        RWO            Retain           Available           nfs            <unset>                          14s
-
->>>>>>>>>>PVC<<<<<<<<<<
-Persistent Volume Claim: That is associate to Storage Class or Persistent Volume.
->>>>>>>>>
->>>>>>>>>Manifest
-$ cat pvc.yaml 
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name:  balbertus-pvc
-spec: 
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: nfs
-  selector:
-    matchLabels:
-      storage: nfs
-
->>>>>>Output
-kubectl get pvc
-NAME            STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-balbertus-pvc   Pending                                      nfs            <unset>                 14s
-
-Describe to complete view
-$ kubectl describe pvc
-Name:          balbertus-pvc
-Namespace:     default
-StorageClass:  nfs
-Status:        Pending
-Volume:        
-Labels:        <none>
-Annotations:   <none>
-Finalizers:    [kubernetes.io/pvc-protection]
-Capacity:      
-Access Modes:  
-VolumeMode:    Filesystem
-Used By:       <none>
-Events:
-  Type    Reason                Age               From                         Message
-  ----    ------                ----              ----                         -------
-  Normal  WaitForFirstConsumer  8s (x3 over 28s)  persistentvolume-controller  waiting for first consumer to be created before binding
-
-Its PENDING because pvc is waiting for first pod creation.
-
-POD manifest
-$ cat pod.yaml 
-apiVersion: v1
-kind: Pod
-metadata:
-  name: nginx-pod
-spec:
-  containers:
-  - name: nginx
-    image: nginx:latest
-    ports:
-    - containerPort: 80
-    volumeMounts:
-    - name: balbertus-pvc
-      mountPath: /usr/share/nginx/html
-  volumes:
-   - name: balbertus-pvc
-     persistentVolumeClaim:
-       claimName: balbertus-pvc
-
-new output
 
 
 
