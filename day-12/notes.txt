@@ -1,6 +1,4 @@
-Day-12
-
-What is Cert-Manager: Its a tool that permit you manager your certificate inside Kubernetes.
+Day-12 What is Cert-Manager: Its a tool that permit you manager your certificate inside Kubernetes.
 (Cloud Native)
 reference:
 https://cert-manager.io/docs/
