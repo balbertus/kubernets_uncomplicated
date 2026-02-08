@@ -1,4 +1,4 @@
-Install a cluster with kubeadm!
+Day 5 - Install a cluster with kubeadm!
 
 1. Create 3 instances at AWS, GCP or Azure (it's about your cloud environment, I am not going to show here)
 	a. At least VMs medium type.
