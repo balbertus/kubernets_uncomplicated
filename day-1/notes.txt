@@ -8,7 +8,7 @@ $ kubectl version Client Version: v1.33.2 Kustomize Version: v5.6.0 Server Versi
 
 Kind https://kind.sigs.k8s.io/docs/user/quick-start/#installation $ kind version kind v0.29.0 go1.24.2 linux/amd64
 
-#########################CREATE A CLUSTER################################################ 
+>>CREATE A CLUSTER<<
 $ kind create cluster # Default cluster context name is kind. ... kind create cluster --name kind-2
 
 When you list your kind clusters, you will see something like the following:
@@ -17,7 +17,7 @@ kind get clusters kind kind-2 In order to interact with a specific cluster, you 
 
 kubectl cluster-info --context kind-kind kubectl cluster-info --context kind-kind-2
 
-#################################Hadling Cluster with kubectl############################## 
+>>Hadling Cluster with kubectl<< 
 $ kubectl get node -n kube-system
 NAME                 STATUS   ROLES           AGE     VERSION
 kind-control-plane   Ready    control-plane   2m55s   v1.33.1
