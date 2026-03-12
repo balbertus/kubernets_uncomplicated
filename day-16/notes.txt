@@ -1,0 +1,20 @@
+Day-16 Network Policies
+
+Network Policies is an essentil tool for security and management to comunicate Pods across the Kubernetes Clusters.
+
+What is Network Policies ?
+
+Its a set of rules to define how Pods can comunicate each others and between pods. Network policies enable you to restric access, Ensuring only allowed traffic for Pods or to External IP address.
+
+Use cases:
+Pod isolation from not authorized traffic
+Access Control for specific services
+Pattern Security and compliance
+
+Fundamental: Ingress and Egress
+Ingress: Control incomming traffic to the Pod
+Egress: Control outgoing traffic to the Pod
+
+How it works ?
+SELECTORS to identify group of Pods and define traffic rules
+

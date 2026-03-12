@@ -1,0 +1,22 @@
+Day-17 - RBAC (Role-Based Access Control)
+
+This is an essential mechanism that allow Sys Admin to define access rules to Users and Services
+inside a Kubernetes Cluster.
+
+What is RBAC, ROle, RoleBinding, ClusterRole and ClusterRoleBinding
+
+1. RBAC 
+    Specific Permissions: for Users and GroupUsers
+    SysAdmins can control who have acess and which resources and how they can get access and use all resources
+
+    Example: 
+    DEV - Can not access alll cluster resources. Just could control Pods into namespace called DEV as:
+        Create
+        Admin 
+
+    Should be permitted by Token and Certificate.
+
+    Its common token used to ServiceAccount that is no human
+    User developer for human
+
+Process to create a Certificate.

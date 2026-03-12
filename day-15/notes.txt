@@ -1,0 +1,20 @@
+Day -15 - Starting some deep diving at Kubernetes
+
+What is Taints ?
+
+Creating taints at Nodes
+
+What is Tolerations ?
+
+What is Labels, Affinity and Anti-Affinity?
+
+Adding Labels at Nodes 
+
+Creating Affinity at Pod
+
+Creating Anti-Affinity rules
+
+Using the preferredScheduling and requiredScheduling
+
+
+
