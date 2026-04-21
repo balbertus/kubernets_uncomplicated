@@ -213,7 +213,7 @@ Funcion NoSchedule:
 
 Its works to avoid anything new at a worker node:
 
-$ kubectl taint node kind-worker2 maintenamce=true:NoSchedule
+$ kubectl taint node kind-worker2 maintenance=true:NoSchedule
 node/kind-worker2 tainted
 $ kubectl scale deployment ngnix --replicas 8
 deployment.apps/ngnix scaled
@@ -232,7 +232,7 @@ See just kind-worker get the new ReplicaSet 6 to 8 the new one (2) are working a
 
 To recover to same actions 
 
-$ kubectl taint node kind-worker2 maintenamce=true:NoSchedule-
+$ kubectl taint node kind-worker2 maintenance=true:NoSchedule-
 node/kind-worker2 untainted
 $ kubectl rollout restart deployment ngnix 
 deployment.apps/ngnix restarted
