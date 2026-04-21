@@ -1,7 +1,7 @@
-#Day -15 - Starting some deep diving at Kubernetes
+Day -15 - Starting some deep diving at Kubernetes
 documentation: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
 
-##What is Taints ?
+What is Taints ?
 Node affinity is a property of Pods that attracts them to set of nodes (either as a preference or a hard requirement).
 So Taints are the opposite -- they allow a node to repel a set of pods.
 
@@ -9,7 +9,7 @@ Creating taints at Nodes
 An important information about Taints.
 By default its already configured for Control-plane:
 
-''$ kubectl get nodes
+$ kubectl get nodes
 NAME                 STATUS     ROLES           AGE   VERSION
 kind-control-plane   Ready      control-plane   26s   v1.34.0
 kind-worker          NotReady   <none>          14s   v1.34.0
@@ -208,9 +208,7 @@ ngnix-748b6b4bc7-98f5t   1/1     Running   0          5s    10.244.2.8    kind-w
 ngnix-748b6b4bc7-dplzm   1/1     Running   0          5s    10.244.1.6    kind-worker    <none>           <none>
 ngnix-748b6b4bc7-sv9sk   1/1     Running   0          3s    10.244.2.9    kind-worker2   <none>           <none>
 
-##Funcion NoSchedule:
-
-Its works to avoid anything new at a worker node:
+Funcion NoSchedule: Its works to avoid anything new at a worker node
 
 $ kubectl taint node kind-worker2 maintenance=true:NoSchedule
 node/kind-worker2 tainted
@@ -258,11 +256,9 @@ ngnix-7ffc88c94c-drnxv   1/1     Running   0          4s    10.244.2.14   kind-w
 ngnix-7ffc88c94c-wn6sc   1/1     Running   0          5s    10.244.1.12   kind-worker    <none>           <none>
 ngnix-7ffc88c94c-wqttx   1/1     Running   0          8s    10.244.2.11   kind-worker2   <none>           <none>
 
-untaint and rebalanced
+untaint and rebalanced: So in summary We see Taint to true:NoExecute and true:NoSchedule
 
-So in summary We see Taint to true:NoExecute and true:NoSchedule
-
-#What is Tolerations ?
+What is Tolerations ?
 Are applied to pods. Tolerations allow the schedule pods with matcing taints. Tolerations allow scheduling but don't guarantee scheduling:
 the scheduling: the scheduler also evaluates other parameter as part of its function.
 
@@ -296,8 +292,6 @@ nginx-666957f9d7-x6khz   1/1     Running   0          44m   10.244.1.9    balber
 nginx-666957f9d7-xn2ml   1/1     Running   0          48m   10.244.2.17   balbertus-c1-worker2   <none>           <none>
 
 You can see NoSchedule follow gpu=true and assign new ones only to ...worker
-
-
 Manifest:
 tolerations:
 - key: "gpu"
@@ -315,6 +309,22 @@ nginx-5d97d57bbd-rhcsx   1/1     Running   0          25s   10.244.1.14   balber
 nginx-5d97d57bbd-sd477   1/1     Running   0          19s   10.244.1.15   balbertus-c1-worker    <none>           <none>
 
 What is Labels, Affinity and Anti-Affinity?
+https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+
+Node Affinity: It is conceptually similar to nodeSelector, allowing you to constrain which nodes your Pod can be scheduled on based on node labels. There are two types of node affinity:
+
+    1. requiredDuringSchedulingIgnoredDuringExecution: The scheduler can't schedule the Pod unless the rule is met. This     functions like nodeSelector, but with a more expressive syntax.
+    2. preferredDuringSchedulingIgnoredDuringExecution: The scheduler tries to find a node that meets the rule. If a matching node is not available, the scheduler still schedules the Pod.
+
+Note:
+In the preceding types, IgnoredDuringExecution means that if the node labels change after Kubernetes schedules the Pod, the Pod continues to run.
+
+You can specify node affinities using the .spec.affinity.nodeAffinity field in your Pod spec.
+
+
+Node AntiAffinity: While podAffinity attracts pods to run together, podAntiAffinity ensures they run apart. By spreading replicas across different nodes or zones, if one node fails, not all replicas of the application are lost. It helps prevent resource-intensive pods from competing for the same node's CPU or memory.
+
+
 
 Adding Labels at Nodes 
 
