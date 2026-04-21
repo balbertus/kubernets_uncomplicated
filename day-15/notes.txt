@@ -1,8 +1,7 @@
-Day -15 - Starting some deep diving at Kubernetes
-
+#Day -15 - Starting some deep diving at Kubernetes
 documentation: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
 
-What is Taints ?
+##What is Taints ?
 Node affinity is a property of Pods that attracts them to set of nodes (either as a preference or a hard requirement).
 So Taints are the opposite -- they allow a node to repel a set of pods.
 
@@ -10,7 +9,7 @@ Creating taints at Nodes
 An important information about Taints.
 By default its already configured for Control-plane:
 
-$ kubectl get nodes
+''$ kubectl get nodes
 NAME                 STATUS     ROLES           AGE   VERSION
 kind-control-plane   Ready      control-plane   26s   v1.34.0
 kind-worker          NotReady   <none>          14s   v1.34.0
@@ -209,7 +208,7 @@ ngnix-748b6b4bc7-98f5t   1/1     Running   0          5s    10.244.2.8    kind-w
 ngnix-748b6b4bc7-dplzm   1/1     Running   0          5s    10.244.1.6    kind-worker    <none>           <none>
 ngnix-748b6b4bc7-sv9sk   1/1     Running   0          3s    10.244.2.9    kind-worker2   <none>           <none>
 
-Funcion NoSchedule:
+##Funcion NoSchedule:
 
 Its works to avoid anything new at a worker node:
 
@@ -263,14 +262,57 @@ untaint and rebalanced
 
 So in summary We see Taint to true:NoExecute and true:NoSchedule
 
-What is Tolerations ?
-Are applied to pods. Tolerations allow th schedule pods with matcing taints. Tolerations allow scheduling but don't guarantee scheduling:
+#What is Tolerations ?
+Are applied to pods. Tolerations allow the schedule pods with matcing taints. Tolerations allow scheduling but don't guarantee scheduling:
 the scheduling: the scheduler also evaluates other parameter as part of its function.
 
-So Taints and Tolerations work together to ensure that pods are not scheduled onto inappropriate nodes. ONe or more taints are applied to a node:
-this marks that the node should not accept any pods that d o not tolerate the taints.
+So Taints and Tolerations work together to ensure that pods are not scheduled onto inappropriate nodes. One or more taints are applied to a node:
+this marks that the node should not accept any pods that do not tolerate the taints.
+
+Example:
+With you have a some parameters at your deployments tolerations permit to run there even though it has NoSchedule...
+
+kubectl taint node balbertus-c1-worker2 gpu=true:NoSchedule
+node/balbertus-c1-worker2 tainted
+$ kubectl describe node balbertus-c1-worker2 |grep Taints
+Taints:             gpu=true:NoSchedule
+
+$ kubectl get pods -o wide
+NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE                   NOMINATED NODE   READINESS GATES
+nginx-666957f9d7-jfccn   1/1     Running   0          44m   10.244.2.18   balbertus-c1-worker2   <none>           <none>
+nginx-666957f9d7-t4rjw   1/1     Running   0          40m   10.244.1.10   balbertus-c1-worker    <none>           <none>
+nginx-666957f9d7-x6khz   1/1     Running   0          40m   10.244.1.9    balbertus-c1-worker    <none>           <none>
+nginx-666957f9d7-xn2ml   1/1     Running   0          44m   10.244.2.17   balbertus-c1-worker2   <none>           <none>
+
+$ kubectl scale deployment nginx --replicas 6
+deployment.apps/nginx scaled
+$ kubectl get pods -o wide
+NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE                   NOMINATED NODE   READINESS GATES
+nginx-666957f9d7-5msbl   1/1     Running   0          6s    10.244.1.12   balbertus-c1-worker    <none>           <none>
+nginx-666957f9d7-jfccn   1/1     Running   0          48m   10.244.2.18   balbertus-c1-worker2   <none>           <none>
+nginx-666957f9d7-t4rjw   1/1     Running   0          44m   10.244.1.10   balbertus-c1-worker    <none>           <none>
+nginx-666957f9d7-v7msl   1/1     Running   0          27s   10.244.1.11   balbertus-c1-worker    <none>           <none>
+nginx-666957f9d7-x6khz   1/1     Running   0          44m   10.244.1.9    balbertus-c1-worker    <none>           <none>
+nginx-666957f9d7-xn2ml   1/1     Running   0          48m   10.244.2.17   balbertus-c1-worker2   <none>           <none>
+
+You can see NoSchedule follow gpu=true and assign new ones only to ...worker
 
 
+Manifest:
+tolerations:
+- key: "gpu"
+  operator: "Equal"
+  value: "true"
+  effect: "NoSchedule"
+
+$ kubectl get pods -o wide
+NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE                   NOMINATED NODE   READINESS GATES
+nginx-5d97d57bbd-59btt   1/1     Running   0          33s   10.244.2.19   balbertus-c1-worker2   <none>           <none>
+nginx-5d97d57bbd-7rtzn   1/1     Running   0          33s   10.244.1.13   balbertus-c1-worker    <none>           <none>
+nginx-5d97d57bbd-nq8cg   1/1     Running   0          32s   10.244.2.20   balbertus-c1-worker2   <none>           <none>
+nginx-5d97d57bbd-pbdvr   1/1     Running   0          16s   10.244.2.21   balbertus-c1-worker2   <none>           <none>
+nginx-5d97d57bbd-rhcsx   1/1     Running   0          25s   10.244.1.14   balbertus-c1-worker    <none>           <none>
+nginx-5d97d57bbd-sd477   1/1     Running   0          19s   10.244.1.15   balbertus-c1-worker    <none>           <none>
 
 What is Labels, Affinity and Anti-Affinity?
 
