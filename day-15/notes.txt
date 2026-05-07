@@ -258,7 +258,7 @@ ngnix-7ffc88c94c-wqttx   1/1     Running   0          8s    10.244.2.11   kind-w
 
 untaint and rebalanced: So in summary We see Taint to true:NoExecute and true:NoSchedule
 
-What is Tolerations ?
+## What is Tolerations ?
 Are applied to pods. Tolerations allow the schedule pods with matcing taints. Tolerations allow scheduling but don't guarantee scheduling:
 the scheduling: the scheduler also evaluates other parameter as part of its function.
 
@@ -308,30 +308,158 @@ nginx-5d97d57bbd-pbdvr   1/1     Running   0          16s   10.244.2.21   balber
 nginx-5d97d57bbd-rhcsx   1/1     Running   0          25s   10.244.1.14   balbertus-c1-worker    <none>           <none>
 nginx-5d97d57bbd-sd477   1/1     Running   0          19s   10.244.1.15   balbertus-c1-worker    <none>           <none>
 
-What is Labels, Affinity and Anti-Affinity?
+## What is Labels, Affinity and Anti-Affinity?
 https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
-
 Node Affinity: It is conceptually similar to nodeSelector, allowing you to constrain which nodes your Pod can be scheduled on based on node labels. There are two types of node affinity:
-
     1. requiredDuringSchedulingIgnoredDuringExecution: The scheduler can't schedule the Pod unless the rule is met. This     functions like nodeSelector, but with a more expressive syntax.
     2. preferredDuringSchedulingIgnoredDuringExecution: The scheduler tries to find a node that meets the rule. If a matching node is not available, the scheduler still schedules the Pod.
 
 Note:
 In the preceding types, IgnoredDuringExecution means that if the node labels change after Kubernetes schedules the Pod, the Pod continues to run.
-
 You can specify node affinities using the .spec.affinity.nodeAffinity field in your Pod spec.
-
-
 Node AntiAffinity: While podAffinity attracts pods to run together, podAntiAffinity ensures they run apart. By spreading replicas across different nodes or zones, if one node fails, not all replicas of the application are lost. It helps prevent resource-intensive pods from competing for the same node's CPU or memory.
 
+## Adding Labels at Nodes 
+https://kubernetes.io/docs/reference/node/node-labels/
+Kubernetes nodes come pre-populated with a standard set of labels.
 
+You can also set your own labels on nodes, either through the kubelet configuration or using the Kubernetes API.
+Preset labels
 
-Adding Labels at Nodes 
+The preset labels that Kubernetes sets on nodes are:
 
-Creating Affinity at Pod
+    kubernetes.io/arch
+    kubernetes.io/hostname
+    kubernetes.io/os
+    node.kubernetes.io/instance-type (if known to the kubelet – Kubernetes may not have this information to set the label)
+    topology.kubernetes.io/region (if known to the kubelet – Kubernetes may not have this information to set the label)
+    topology.kubernetes.io/zone (if known to the kubelet – Kubernetes may not have this information to set the label)
 
-Creating Anti-Affinity rules
+Note:
+The value of these labels is cloud provider specific and is not guaranteed to be reliable. For example, the value of kubernetes.io/hostname may be the same as the node name in some environments and a different value in other environments.
 
-Using the preferredScheduling and requiredScheduling
+Open your shell and configura as you desire and according your environment
 
+Example:
+$ kubectl get nodes
+NAME                         STATUS   ROLES           AGE   VERSION
+balbertus-c1-control-plane   Ready    control-plane   16d   v1.35.0
+balbertus-c1-worker          Ready    <none>          16d   v1.35.0
+balbertus-c1-worker2         Ready    <none>          16d   v1.35.0
 
+$ kubectl label nodes balbertus-c1-worker region=sa-east1
+node/balbertus-c1-worker labeled
+$ kubectl label nodes balbertus-c1-worker2 region=sa-west1
+node/balbertus-c1-worker2 labeled
+
+$ kubectl describe node balbertus-c1-worker 
+Name:               balbertus-c1-worker
+Roles:              <none>
+Labels:             beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/os=linux
+                    kubernetes.io/arch=amd64
+                    kubernetes.io/hostname=balbertus-c1-worker
+                    kubernetes.io/os=linux
+                    region=sa-east1
+
+$ kubectl describe node balbertus-c1-worker2
+Name:               balbertus-c1-worker2
+Roles:              <none>
+Labels:             beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/os=linux
+                    kubernetes.io/arch=amd64
+                    kubernetes.io/hostname=balbertus-c1-worker2
+                    kubernetes.io/os=linux
+                    region=sa-west1
+OR
+$ kubectl get node balbertus-c1-worker2 --show-labels
+NAME                   STATUS   ROLES    AGE   VERSION   LABELS
+balbertus-c1-worker2   Ready    <none>   16d   v1.35.0   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=balbertus-c1-worker2,kubernetes.io/os=linux,region=sa-west1
+
+## Creating Affinity at Pod
+Manifest:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: "region"
+                  operator: "In"
+                  values:
+                  - "sa-east1"
+
+When applied We can see just running pods at region:sa-east1 
+$ kubectl get nodes -L region
+NAME                         STATUS   ROLES           AGE   VERSION   REGION
+balbertus-c1-control-plane   Ready    control-plane   16d   v1.35.0   
+balbertus-c1-worker          Ready    <none>          16d   v1.35.0   sa-east1
+balbertus-c1-worker2         Ready    <none>          16d   v1.35.0   sa-west1
+
+$ kubectl get pods -o wide
+NAME                     READY   STATUS    RESTARTS   AGE     IP            NODE                  NOMINATED NODE   READINESS GATES
+nginx-58bdbcbdcb-czlw6   1/1     Running   0          3m56s   10.244.1.9    balbertus-c1-worker   <none>           <none>
+nginx-58bdbcbdcb-h9fzw   1/1     Running   0          3m56s   10.244.1.5    balbertus-c1-worker   <none>           <none>
+nginx-58bdbcbdcb-m5dpq   1/1     Running   0          3m56s   10.244.1.8    balbertus-c1-worker   <none>           <none>
+nginx-58bdbcbdcb-pp2wf   1/1     Running   0          3m56s   10.244.1.6    balbertus-c1-worker   <none>           <none>
+nginx-58bdbcbdcb-t7ddf   1/1     Running   0          3m56s   10.244.1.10   balbertus-c1-worker   <none>           <none>
+nginx-58bdbcbdcb-twk24   1/1     Running   0          3m56s   10.244.1.7    balbertus-c1-worker   <none>           <none>
+$ 
+
+## Creating Anti-Affinity rules
+Manifest:
+    affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:  #Label reffers to Pod not to Node
+                app: nginxa
+            topologyKey: "east"
+
+This Manifest has 3 replicas and will garantee to distribute according topology key parameters. So We expect app: nginxa running on 2 pods in 1 node and the oher at sigle node.
+$ kubectl get pods -o wide
+NAME                      READY   STATUS    RESTARTS   AGE     IP            NODE                   NOMINATED NODE   READINESS GATES
+nginx-58bdbcbdcb-czlw6    1/1     Running   0          17m     10.244.1.9    balbertus-c1-worker    <none>           <none>
+nginx-58bdbcbdcb-h9fzw    1/1     Running   0          17m     10.244.1.5    balbertus-c1-worker    <none>           <none>
+nginx-58bdbcbdcb-m5dpq    1/1     Running   0          17m     10.244.1.8    balbertus-c1-worker    <none>           <none>
+nginx-58bdbcbdcb-pp2wf    1/1     Running   0          17m     10.244.1.6    balbertus-c1-worker    <none>           <none>
+nginx-58bdbcbdcb-t7ddf    1/1     Running   0          17m     10.244.1.10   balbertus-c1-worker    <none>           <none>
+nginx-58bdbcbdcb-twk24    1/1     Running   0          17m     10.244.1.7    balbertus-c1-worker    <none>           <none>
+nginxa-56b748b6f4-j8849   1/1     Running   0          4m10s   10.244.2.5    balbertus-c1-worker2   <none>           <none>
+nginxa-56b748b6f4-vxcgb   1/1     Running   0          4m10s   10.244.1.11   balbertus-c1-worker    <none>           <none>
+nginxa-56b748b6f4-z9c8p   1/1     Running   0          4m10s   10.244.2.6    balbertus-c1-worker2   <none>           <none>
+
+$ kubectl get nodes -L region
+NAME                         STATUS   ROLES           AGE   VERSION   REGION
+balbertus-c1-control-plane   Ready    control-plane   16d   v1.35.0   
+balbertus-c1-worker          Ready    <none>          16d   v1.35.0   sa-east1
+balbertus-c1-worker2         Ready    <none>          16d   v1.35.0   sa-west1
+
+In case I did a scale up to 6 see results:
+nginxa-56b748b6f4-hkhf2   1/1     Running   0          14s    10.244.2.7    balbertus-c1-worker2   <none>           <none>
+nginxa-56b748b6f4-j8849   1/1     Running   0          6m4s   10.244.2.5    balbertus-c1-worker2   <none>           <none>
+nginxa-56b748b6f4-vxcgb   1/1     Running   0          6m4s   10.244.1.11   balbertus-c1-worker    <none>           <none>
+nginxa-56b748b6f4-xv6s5   1/1     Running   0          14s    10.244.1.13   balbertus-c1-worker    <none>           <none>
+nginxa-56b748b6f4-z9c8p   1/1     Running   0          6m4s   10.244.2.6    balbertus-c1-worker2   <none>           <none>
+nginxa-56b748b6f4-zx4hd   1/1     Running   0          14s    10.244.1.12   balbertus-c1-worker    <none>           <none>
+
+3 pods for each node
+
+## Option With preferred insted of required
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:  
+                  app: nginxa
+              topologyKey: "west1"
+
+$ kubectl get pods -o wide
+NAME                      READY   STATUS    RESTARTS   AGE   IP            NODE                   NOMINATED NODE   READINESS GATES
+nginxa-5cb8c58c6f-45g2n   1/1     Running   0          28s   10.244.1.21   balbertus-c1-worker    <none>           <none>
+nginxa-5cb8c58c6f-4ttwb   1/1     Running   0          28s   10.244.1.22   balbertus-c1-worker    <none>           <none>
+nginxa-5cb8c58c6f-78p7t   1/1     Running   0          28s   10.244.2.14   balbertus-c1-worker2   <none>           <none>
+nginxa-5cb8c58c6f-bzvm2   1/1     Running   0          28s   10.244.1.20   balbertus-c1-worker    <none>           <none>
+nginxa-5cb8c58c6f-hwrrl   1/1     Running   0          28s   10.244.2.16   balbertus-c1-worker2   <none>           <none>
+nginxa-5cb8c58c6f-vlbsq   1/1     Running   0          28s   10.244.2.15   balbertus-c1-worker2   <none>           <none>
