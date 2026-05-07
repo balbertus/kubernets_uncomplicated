@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginxa
+  name: nginxa
+spec:
+  replicas: 6 
+  selector:
+    matchLabels:
+      app: nginxa
+  template:
+    metadata:
+      labels:
+        app: nginxa
+    spec:
+      containers:
+      - image: nginx
+        name: nginxa
+        ports:
+        - containerPort: 80
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:  
+                  app: nginxa
+              topologyKey: "west1"
