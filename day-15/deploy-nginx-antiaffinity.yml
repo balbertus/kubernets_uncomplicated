@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginxa
+  name: nginxa
+spec:
+  replicas: 6 
+  selector:
+    matchLabels:
+      app: nginxa
+  template:
+    metadata:
+      labels:
+        app: nginxa
+    spec:
+      containers:
+      - image: nginx
+        name: nginxa
+        ports:
+        - containerPort: 80
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:  #Label reffers to Pod not to Node
+                app: nginxa
+            topologyKey: "east"
