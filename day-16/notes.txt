@@ -3,8 +3,8 @@ Day-16 Network Policies
 Network Policies is an essentil tool for security and management to comunicate Pods across the Kubernetes Clusters.
 
 What is Network Policies ?
-
-Its a set of rules to define how Pods can comunicate each others and between pods. Network policies enable you to restric access, Ensuring only allowed traffic for Pods or to External IP address.
+https://kubernetes.io/docs/concepts/services-networking/network-policies/
+Its a set of rules that define how your Pods can communicate each others and with others network endpoints.Network policies enable you to restric access, Ensuring only allowed traffic for Pods or to External IP address.
 
 Use cases:
 Pod isolation from not authorized traffic
@@ -17,4 +17,70 @@ Egress: Control outgoing traffic to the Pod
 
 How it works ?
 SELECTORS to identify group of Pods and define traffic rules
+
+Extras: EKS cluster creation (AWS CNI)
+1. Create a Cluster
+$ eksctl create cluster --name=eks-cluster --version=1.xx --region=us-east-1 --nodegroup-name=eks-cluster-nodegroup --node-type=t3.medium --nodes=2 --node-min=1 --nodes-max=3 --managed
+2. Create/add an add-on (check current version)
+$ eksctl create addon --name vpc-cni --version v1.16.0-eksbuild.1 --cluster eks-cluster --force
+3. Enable Network Policy at AWS 
+EKS > Add-ons > Amazon VPC CNI > Edit > Optional Conficuration settings > Configuration values
+# Type at first field
+"enableNetworkPolicy": "true"
+# click on save
+
+To better undersdanting about Network Policy goes to install an Ingress Controller
+1. Install nginx ingress controller
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.5/deploy/static/provider/cloud/deploy.yaml
+2. Verify
+$ kubectl get pods -n ingress-nginx
+3. Install
+$ kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=90s
+$ kubectl get svc -n ingress-nginx
+
+Bring up your application and respective services
+
+###
+Creating our first Network Policy
+
+# kubectl get netpol
+
+Manifest: This policy will block any access to app with label redis from other namespace just permit access from namespace test on this example.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: first-netpol
+  namespace: test
+spec:
+  podSelector:
+    matchLabels:
+      app: redis # everyone that need to communicate with app called redis
+  ingress:
+  - from:
+    - podSelector: {} # means everyone
+
+Block everyone that isn't on the same namespace
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: second-netpol
+  namespace: test
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: test
+
+
+
+
+
 
